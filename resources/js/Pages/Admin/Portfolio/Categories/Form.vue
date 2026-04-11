@@ -6,10 +6,14 @@ import { computed, onBeforeUnmount, ref } from 'vue';
 
 defineOptions({ layout: null });
 
-const props = defineProps({ category: Object });
+const props = defineProps({
+    category: Object,
+    productCategories: { type: Array, default: () => [] },
+});
 const isEditing = computed(() => !!props.category);
 
 const form = useForm({
+    product_category_id: props.category?.product_category_id ?? null,
     name_pt:         props.category?.name_pt || '',
     name_en:         props.category?.name_en || '',
     description_pt:  props.category?.description_pt || '',
@@ -80,6 +84,20 @@ const coverSrc = computed(() => coverPreview.value || props.category?.cover_url 
                         </h3>
 
                         <div class="space-y-6">
+                            <!-- Categoria -->
+                            <div class="space-y-2">
+                                <label class="font-label text-[10px] uppercase tracking-widest text-outline block">Categoria</label>
+                                <select v-model="form.product_category_id"
+                                    class="w-full rounded-md p-4 font-body text-base outline-none transition-all focus:ring-2 focus:ring-primary-fixed-dim"
+                                    style="background-color: #ebe8e3; border: none;">
+                                    <option :value="null">— Sem categoria —</option>
+                                    <option v-for="cat in productCategories" :key="cat.id" :value="cat.id">
+                                        {{ cat.name }}
+                                    </option>
+                                </select>
+                                <p v-if="form.errors.product_category_id" class="text-xs text-red-500">{{ form.errors.product_category_id }}</p>
+                            </div>
+
                             <!-- Nomes -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div class="space-y-2">

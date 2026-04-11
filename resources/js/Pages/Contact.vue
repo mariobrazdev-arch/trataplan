@@ -257,7 +257,7 @@ function submit() {
                         <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(1,45,29,0.6) 0%, transparent 60%);"></div>
                         <div class="absolute bottom-4 left-5">
                             <p class="text-white font-black text-lg leading-tight" style="font-family: Manrope, sans-serif;">Trataplan</p>
-                            <p class="text-xs" style="color: rgba(255,255,255,0.6); font-family: Manrope, sans-serif;">Planalto Alegre – SC</p>
+                            <p class="text-xs" style="color: rgba(255,255,255,0.6); font-family: Manrope, sans-serif;">{{ address }}</p>
                         </div>
                     </div>
 
@@ -319,7 +319,7 @@ function submit() {
 
                     <!-- Botão Maps -->
                     <a
-                        href="https://www.google.com/maps/search/SC-283,+Planalto+Alegre+SC"
+                        :href="'https://www.google.com/maps/search/' + encodeURIComponent(address)"
                         target="_blank" rel="noopener noreferrer"
                         class="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-sm transition-all hover:opacity-90 active:scale-95"
                         style="background-color: #fbbf24; color: #012d1d; font-family: Manrope, sans-serif;"

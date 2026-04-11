@@ -8,16 +8,26 @@ const flash = computed(() => page.props.flash);
 const sidebarOpen = ref(false);
 
 const navItems = [
-    { label: 'Dashboard', href: '/admin', icon: 'dashboard' },
-    { label: 'Postagens', href: '/admin/posts', icon: 'article' },
-    { label: 'Páginas', href: '/admin/paginas', icon: 'web' },
-    { label: 'Parceiros', href: '/admin/parceiros', icon: 'handshake' },
+    { separator: true, label: 'Geral' },
+    { label: 'Dashboard',     href: '/admin',           icon: 'dashboard' },
+    { label: 'Parceiros',     href: '/admin/parceiros', icon: 'handshake' },
+    { label: 'Usuários',      href: '/admin/usuarios',  icon: 'group' },
+
+    { separator: true, label: 'Blog' },
+    { label: 'Postagens',     href: '/admin/posts',           icon: 'article' },
+    { label: 'Cat. Postagens',href: '/admin/post-categorias', icon: 'label' },
+
     { separator: true, label: 'Portfólio' },
-    { label: 'Mão de Obra', href: '/admin/portfolio/servicos', icon: 'construction' },
-    { label: 'Produtos', href: '/admin/portfolio/categorias', icon: 'inventory_2' },
-    { separator: true },
-    { label: 'Mensagens', href: '/admin/mensagens', icon: 'mail' },
-    { label: 'Configurações', href: '/admin/configuracoes', icon: 'settings' },
+    { label: 'Categorias',    href: '/admin/produto-categorias',    icon: 'category' },
+    { label: 'Mão de Obra',   href: '/admin/portfolio/servicos',    icon: 'construction' },
+    { label: 'Produtos',      href: '/admin/portfolio/categorias',  icon: 'inventory_2' },
+
+    { separator: true, label: 'Contato' },
+    { label: 'Mensagens',     href: '/admin/mensagens', icon: 'mail' },
+
+    { separator: true, label: 'Configurações' },
+    { label: 'Pág. Sobre',    href: '/admin/sobre',         icon: 'info' },
+    { label: 'Pág. Home',     href: '/admin/configuracoes', icon: 'settings' },
 ];
 
 const userInitials = computed(() => {
@@ -63,25 +73,24 @@ function isActive(href) {
             </div>
 
             <!-- Nav -->
-            <nav class="flex-grow space-y-1 overflow-y-auto">
+            <nav class="flex-grow overflow-y-auto">
                 <template v-for="item in navItems" :key="item.href ?? item.label">
                     <template v-if="item.separator">
-                        <div v-if="item.label" class="pt-3 pb-1">
+                        <div v-if="item.label" class="pt-3 pb-0.5">
                             <span class="font-label text-[9px] uppercase tracking-[0.2em] font-bold" style="color: rgba(255,255,255,0.25);">{{ item.label }}</span>
                         </div>
-                        <hr v-else class="my-2 border-emerald-800/30" />
                     </template>
                     <Link
                         v-else
                         :href="item.href"
-                        class="flex items-center space-x-3 p-3 rounded-md font-label text-sm uppercase tracking-widest transition-all duration-200 ease-in-out"
+                        class="flex items-center space-x-3 px-3 py-1.5 rounded-md font-label text-sm uppercase tracking-widest transition-all duration-200 ease-in-out"
                         :class="isActive(item.href)
                             ? 'text-white shadow-inner'
                             : 'text-emerald-100/70 hover:bg-emerald-800/50 hover:text-white'"
                         :style="isActive(item.href) ? 'background-color: #77574d;' : ''"
                         @click="sidebarOpen = false"
                     >
-                        <span class="material-symbols-outlined text-xl">{{ item.icon }}</span>
+                        <span class="material-symbols-outlined text-lg">{{ item.icon }}</span>
                         <span>{{ item.label }}</span>
                     </Link>
                 </template>
@@ -97,6 +106,15 @@ function isActive(href) {
                 >
                     <span class="material-symbols-outlined text-base">open_in_new</span>
                     Ver Site
+                </Link>
+                <Link
+                    href="/admin/perfil"
+                    class="flex items-center space-x-3 p-3 w-full text-emerald-100/70 hover:bg-emerald-800/50 hover:text-white rounded-md transition-all duration-200 font-label text-sm uppercase tracking-widest"
+                    :style="isActive('/admin/perfil') ? 'background-color: #77574d; color: white;' : ''"
+                    @click="sidebarOpen = false"
+                >
+                    <span class="material-symbols-outlined">manage_accounts</span>
+                    <span>Meu Perfil</span>
                 </Link>
                 <button
                     @click="logout"

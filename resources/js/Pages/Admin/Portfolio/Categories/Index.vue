@@ -63,6 +63,11 @@ function destroy(cat) {
                                 : 'background-color: #ebe8e3; color: #414844;'">
                             {{ cat.is_active ? 'Ativo' : 'Inativo' }}
                         </span>
+                        <span v-if="cat.product_category_name"
+                            class="px-2 py-0.5 rounded font-label text-[9px] uppercase font-black tracking-widest"
+                            style="background-color: #e0f2e9; color: #012d1d;">
+                            {{ cat.product_category_name }}
+                        </span>
                     </div>
                     <h4 class="text-xl font-headline font-extrabold text-primary">{{ cat.name_pt }}</h4>
                     <p class="text-sm font-body italic mt-1" style="color: #414844;">{{ cat.name_en }}</p>

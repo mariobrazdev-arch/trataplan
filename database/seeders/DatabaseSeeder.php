@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             PagesSeeder::class,
             PortfolioCategorySeeder::class,
             PortfolioServiceSeeder::class,
+            PostCategorySeeder::class,
+            AboutPageVersionSeeder::class,
         ]);
     }
 }

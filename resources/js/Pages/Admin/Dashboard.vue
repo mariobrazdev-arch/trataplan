@@ -19,7 +19,6 @@ const props = defineProps({
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             <div v-for="stat in [
                 { label: 'Postagens', value: stats.posts_count, icon: 'article', sub: `${stats.published_posts} publicadas` },
-                { label: 'Páginas', value: stats.pages_count, icon: 'web', sub: '' },
                 { label: 'Parceiros', value: stats.partners_count, icon: 'handshake', sub: 'ativos' },
                 { label: 'Mensagens', value: stats.unread_messages, icon: 'mail', sub: 'não lidas', alert: stats.unread_messages > 0 },
             ]" :key="stat.label"

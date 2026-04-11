@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PortfolioCategory;
 use App\Models\PortfolioCategoryPhoto;
+use App\Models\ProductCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -13,9 +14,16 @@ use Inertia\Response;
 
 class PortfolioCategoryAdminController extends Controller
 {
+    private function productCategoriesList(): array
+    {
+        return ProductCategory::orderBy('name_pt')->get(['id', 'name_pt', 'name_en'])
+            ->map(fn ($c) => ['id' => $c->id, 'name' => $c->name_pt . ($c->name_en ? " / {$c->name_en}" : '')])
+            ->toArray();
+    }
+
     public function index(): Response
     {
-        $categories = PortfolioCategory::with('photos')->latest('id')->get()->map(fn ($c) => [
+        $categories = PortfolioCategory::with(['photos', 'productCategory'])->latest('id')->get()->map(fn ($c) => [
             'id'        => $c->id,
             'name_pt'   => $c->name_pt,
             'name_en'   => $c->name_en,
@@ -24,6 +32,10 @@ class PortfolioCategoryAdminController extends Controller
             'cover_url' => $c->cover_url ?? $c->photos->first()?->url,
             'is_active' => $c->is_active,
             'photos_count' => $c->photos->count(),
+            'product_category_id'   => $c->product_category_id,
+            'product_category_name' => $c->productCategory
+                ? $c->productCategory->name_pt . ($c->productCategory->name_en ? " / {$c->productCategory->name_en}" : '')
+                : null,
         ]);
 
         return Inertia::render('Admin/Portfolio/Categories/Index', [
@@ -33,12 +45,16 @@ class PortfolioCategoryAdminController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Admin/Portfolio/Categories/Form', ['category' => null]);
+        return Inertia::render('Admin/Portfolio/Categories/Form', [
+            'category'          => null,
+            'productCategories' => $this->productCategoriesList(),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'product_category_id' => ['nullable', 'integer', 'exists:product_categories,id'],
             'name_pt'   => ['required', 'string', 'max:150'],
             'name_en'   => ['required', 'string', 'max:150'],
             'description_pt' => ['nullable', 'string'],
@@ -83,24 +99,27 @@ class PortfolioCategoryAdminController extends Controller
     {
         return Inertia::render('Admin/Portfolio/Categories/Form', [
             'category' => [
-                'id'        => $category->id,
-                'name_pt'   => $category->name_pt,
-                'name_en'   => $category->name_en,
-                'description_pt' => $category->description_pt,
-                'description_en' => $category->description_en,
-                'cover_url' => $category->cover_url,
-                'is_active' => $category->is_active,
+                'id'                  => $category->id,
+                'product_category_id' => $category->product_category_id,
+                'name_pt'             => $category->name_pt,
+                'name_en'             => $category->name_en,
+                'description_pt'      => $category->description_pt,
+                'description_en'      => $category->description_en,
+                'cover_url'           => $category->cover_url,
+                'is_active'           => $category->is_active,
                 'photos' => $category->photos->map(fn ($ph) => [
                     'id' => $ph->id,
                     'url' => $ph->url,
                 ]),
             ],
+            'productCategories' => $this->productCategoriesList(),
         ]);
     }
 
     public function update(Request $request, PortfolioCategory $category): RedirectResponse
     {
         $validated = $request->validate([
+            'product_category_id' => ['nullable', 'integer', 'exists:product_categories,id'],
             'name_pt'   => ['required', 'string', 'max:150'],
             'name_en'   => ['required', 'string', 'max:150'],
             'description_pt' => ['nullable', 'string'],

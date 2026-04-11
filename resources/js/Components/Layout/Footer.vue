@@ -233,7 +233,7 @@ const linkedin  = computed(() => setting('linkedin_url',    ''));
                 <p class="text-sm flex items-center gap-1.5 text-white/50"
                    style="font-family: Manrope, sans-serif;">
                     <span class="material-symbols-outlined text-sm leading-none text-amber-400/60">location_on</span>
-                    Planalto Alegre – SC, Brasil
+                    {{ setting('contact_address', 'Planalto Alegre - SC') }}
                 </p>
             </div>
         </div>

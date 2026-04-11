@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Page;
 use App\Models\Post;
 use Spatie\Sitemap\Sitemap;
 use Spatie\Sitemap\Tags\Url;

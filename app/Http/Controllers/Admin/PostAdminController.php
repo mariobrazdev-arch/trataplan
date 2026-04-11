@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Models\PostCategory;
 use App\Models\PostPhoto;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,6 +31,7 @@ class PostAdminController extends Controller
                 'published_at' => $post->published_at?->format('d/m/Y H:i'),
                 'author' => $post->user?->name,
                 'created_at' => $post->created_at->format('d/m/Y'),
+                'category_name' => $post->postCategory?->name_pt,
             ]);
 
         return Inertia::render('Admin/Posts/Index', ['posts' => $posts]);
@@ -37,14 +39,17 @@ class PostAdminController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Admin/Posts/Form', ['post' => null]);
+        return Inertia::render('Admin/Posts/Form', [
+            'post' => null,
+            'postCategories' => PostCategory::orderBy('order')->get(['id', 'name_pt', 'name_en']),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'title_pt' => ['required', 'string', 'max:255'],
-            'title_en' => ['required', 'string', 'max:255'],
+            'title_en' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:posts,slug'],
             'content_pt' => ['nullable', 'string'],
             'content_en' => ['nullable', 'string'],
@@ -58,6 +63,7 @@ class PostAdminController extends Controller
             'new_photos' => ['nullable', 'array'],
             'new_photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
             'published_at' => ['nullable', 'date'],
+            'post_category_id' => ['nullable', 'exists:post_categories,id'],
         ]);
 
         $slug = $validated['slug'] ?? Str::slug($validated['title_pt']);
@@ -97,6 +103,7 @@ class PostAdminController extends Controller
         $post->load('photos');
 
         return Inertia::render('Admin/Posts/Form', [
+            'postCategories' => PostCategory::orderBy('order')->get(['id', 'name_pt', 'name_en']),
             'post' => [
                 'id' => $post->id,
                 'slug' => $post->slug,
@@ -116,6 +123,7 @@ class PostAdminController extends Controller
                     'url' => $photo->url,
                 ]),
                 'published_at' => $post->published_at?->format('Y-m-d\TH:i'),
+                'post_category_id' => $post->post_category_id,
             ],
         ]);
     }
@@ -124,7 +132,7 @@ class PostAdminController extends Controller
     {
         $validated = $request->validate([
             'title_pt' => ['required', 'string', 'max:255'],
-            'title_en' => ['required', 'string', 'max:255'],
+            'title_en' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', "unique:posts,slug,{$post->id}"],
             'content_pt' => ['nullable', 'string'],
             'content_en' => ['nullable', 'string'],
@@ -138,6 +146,7 @@ class PostAdminController extends Controller
             'new_photos' => ['nullable', 'array'],
             'new_photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
             'published_at' => ['nullable', 'date'],
+            'post_category_id' => ['nullable', 'exists:post_categories,id'],
         ]);
 
         if ($request->hasFile('featured_image')) {

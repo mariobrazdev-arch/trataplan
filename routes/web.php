@@ -1,19 +1,24 @@
 <?php
 
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\PageController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\SitemapController;
-use App\Http\Controllers\Admin\ContactAdminController;
+use App\Http\Controllers\Admin\AboutAdminController;
+use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\PageAdminController;
 use App\Http\Controllers\Admin\PartnerAdminController;
 use App\Http\Controllers\Admin\PortfolioCategoryAdminController;
 use App\Http\Controllers\Admin\PortfolioServiceAdminController;
 use App\Http\Controllers\Admin\PostAdminController;
+use App\Http\Controllers\Admin\PostCategoryAdminController;
+use App\Http\Controllers\Admin\ProductCategoryAdminController;
+use App\Http\Controllers\Admin\ContactAdminController;
 use App\Http\Controllers\Admin\SettingsAdminController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,8 +28,10 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/sobre', [PageController::class, 'show'])->defaults('slug', 'about')->name('about');
-Route::get('/produtos', [PageController::class, 'show'])->defaults('slug', 'products')->name('products');
+Route::get('/sobre', [AboutController::class, 'show'])->name('about');
+Route::get('/catalogo', [CatalogController::class, 'index'])->name('catalog');
+Route::get('/catalogo/produto/{category}', [CatalogController::class, 'showProduct'])->name('catalog.product');
+Route::get('/catalogo/servico/{service}', [CatalogController::class, 'showService'])->name('catalog.service');
 Route::get('/blog', [PostController::class, 'index'])->name('blog');
 Route::get('/blog/{slug}', [PostController::class, 'show'])->name('blog.show');
 Route::get('/parceiros', [PartnerController::class, 'index'])->name('partners');
@@ -38,8 +45,10 @@ Route::post('/contato', [ContactController::class, 'store'])->name('contact.stor
 */
 Route::prefix('en')->name('en.')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
-    Route::get('/about', [PageController::class, 'show'])->defaults('slug', 'about')->name('about');
-    Route::get('/products', [PageController::class, 'show'])->defaults('slug', 'products')->name('products');
+    Route::get('/about', [AboutController::class, 'show'])->name('about');
+    Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
+    Route::get('/catalog/product/{category}', [CatalogController::class, 'showProduct'])->name('catalog.product');
+    Route::get('/catalog/service/{service}', [CatalogController::class, 'showService'])->name('catalog.service');
     Route::get('/blog', [PostController::class, 'index'])->name('blog');
     Route::get('/blog/{slug}', [PostController::class, 'show'])->name('blog.show');
     Route::get('/partners', [PartnerController::class, 'index'])->name('partners');
@@ -73,6 +82,13 @@ Route::post('/admin/logout', [AuthController::class, 'logout'])->name('logout')-
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+    // About (Página Sobre)
+    Route::get('/sobre', [AboutAdminController::class, 'index'])->name('about.index');
+    Route::get('/sobre/criar', [AboutAdminController::class, 'create'])->name('about.create');
+    Route::post('/sobre', [AboutAdminController::class, 'store'])->name('about.store');
+    Route::post('/sobre/{about}/ativar', [AboutAdminController::class, 'activate'])->name('about.activate');
+    Route::delete('/sobre/{about}', [AboutAdminController::class, 'destroy'])->name('about.destroy');
+
     // Posts
     Route::get('/posts', [PostAdminController::class, 'index'])->name('posts.index');
     Route::get('/posts/criar', [PostAdminController::class, 'create'])->name('posts.create');
@@ -82,10 +98,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::delete('/posts/fotos/{photo}', [PostAdminController::class, 'destroyPhoto'])->name('posts.destroyPhoto');
     Route::delete('/posts/{post}', [PostAdminController::class, 'destroy'])->name('posts.destroy');
 
-    // Pages
-    Route::get('/paginas', [PageAdminController::class, 'index'])->name('pages.index');
-    Route::get('/paginas/{page}/editar', [PageAdminController::class, 'edit'])->name('pages.edit');
-    Route::patch('/paginas/{page}', [PageAdminController::class, 'update'])->name('pages.update');
+    // Post Categories
+    Route::get('/post-categorias', [PostCategoryAdminController::class, 'index'])->name('post-categories.index');
+    Route::post('/post-categorias', [PostCategoryAdminController::class, 'store'])->name('post-categories.store');
+    Route::patch('/post-categorias/{postCategory}', [PostCategoryAdminController::class, 'update'])->name('post-categories.update');
+    Route::delete('/post-categorias/{postCategory}', [PostCategoryAdminController::class, 'destroy'])->name('post-categories.destroy');
 
     // Partners
     Route::get('/parceiros', [PartnerAdminController::class, 'index'])->name('partners.index');
@@ -99,6 +116,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Settings
     Route::get('/configuracoes', [SettingsAdminController::class, 'index'])->name('settings');
     Route::patch('/configuracoes', [SettingsAdminController::class, 'update'])->name('settings.update');
+
+    // Product Categories
+    Route::get('/produto-categorias', [ProductCategoryAdminController::class, 'index'])->name('product-categories.index');
+    Route::post('/produto-categorias', [ProductCategoryAdminController::class, 'store'])->name('product-categories.store');
+    Route::patch('/produto-categorias/{productCategory}', [ProductCategoryAdminController::class, 'update'])->name('product-categories.update');
+    Route::delete('/produto-categorias/{productCategory}', [ProductCategoryAdminController::class, 'destroy'])->name('product-categories.destroy');
 
     // Portfolio — categories
     Route::get('/portfolio/categorias', [PortfolioCategoryAdminController::class, 'index'])->name('portfolio.categories.index');
@@ -122,4 +145,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/mensagens', [ContactAdminController::class, 'index'])->name('contact.index');
     Route::get('/mensagens/{message}', [ContactAdminController::class, 'show'])->name('contact.show');
     Route::delete('/mensagens/{message}', [ContactAdminController::class, 'destroy'])->name('contact.destroy');
+
+    // Users
+    Route::get('/usuarios', [UserAdminController::class, 'index'])->name('users.index');
+    Route::get('/usuarios/criar', [UserAdminController::class, 'create'])->name('users.create');
+    Route::post('/usuarios', [UserAdminController::class, 'store'])->name('users.store');
+    Route::get('/usuarios/{user}/editar', [UserAdminController::class, 'edit'])->name('users.edit');
+    Route::patch('/usuarios/{user}', [UserAdminController::class, 'update'])->name('users.update');
+    Route::delete('/usuarios/{user}', [UserAdminController::class, 'destroy'])->name('users.destroy');
+
+    // Profile
+    Route::get('/perfil', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/perfil', [ProfileController::class, 'update'])->name('profile.update');
 });

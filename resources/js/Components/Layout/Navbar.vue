@@ -16,10 +16,10 @@ const navLinks = computed(() => {
     const prefix = locale.value === 'en' ? '/en' : '';
     return [
         { label: t('Início', 'Home'),        href: prefix + '/' },
-        { label: t('Sobre', 'About'),        href: prefix + (locale.value === 'en' ? '/about'    : '/sobre') },
-        { label: t('Produtos', 'Products'),  href: prefix + (locale.value === 'en' ? '/products' : '/produtos') },
+        { label: t('Sobre', 'About'),        href: prefix + (locale.value === 'en' ? '/about'   : '/sobre') },
+        { label: t('Catálogo', 'Catalog'),   href: prefix + (locale.value === 'en' ? '/catalog' : '/catalogo') },
         { label: 'Blog',                     href: prefix + '/blog' },
-        { label: t('Contato', 'Contact'),    href: prefix + (locale.value === 'en' ? '/contact'  : '/contato') },
+        { label: t('Contato', 'Contact'),    href: prefix + (locale.value === 'en' ? '/contact' : '/contato') },
     ];
 });
 

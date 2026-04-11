@@ -6,7 +6,7 @@ import { ref, computed } from 'vue';
 
 defineOptions({ layout: null });
 
-const props = defineProps({ post: Object });
+const props = defineProps({ post: Object, postCategories: Array });
 
 const isEditing = computed(() => !!props.post);
 const activeTab = ref('pt');
@@ -28,6 +28,7 @@ const form = useForm({
     featured_image: null,
     new_photos: [],
     published_at: props.post?.published_at || '',
+    post_category_id: props.post?.post_category_id || '',
 });
 
 function handleImage(e) {
@@ -156,7 +157,7 @@ const isPublished = computed(() => !!form.published_at);
                             <template v-else-if="activeTab === 'en'">
                                 <div class="space-y-2">
                                     <p class="font-label text-[10px] uppercase tracking-[0.2em] text-outline">Service Title</p>
-                                    <input v-model="form.title_en" required type="text"
+                                    <input v-model="form.title_en" type="text"
                                         placeholder="Ex: Pinheiros Residence – Timber Structure"
                                         class="w-full bg-transparent outline-none font-headline font-extrabold text-primary leading-tight transition-all"
                                         style="font-size: 1.6rem; border: none; border-bottom: 2px solid #c1c8c2;"
@@ -261,6 +262,18 @@ const isPublished = computed(() => !!form.published_at);
                         <div class="flex items-center gap-2 mb-2">
                             <span class="material-symbols-outlined text-base" style="color: #6a5e33; font-variation-settings: 'FILL' 1;">settings</span>
                             <p class="font-label text-[10px] uppercase tracking-[0.2em] text-outline">Publicação</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <p class="font-label text-[10px] uppercase tracking-widest text-outline">Categoria</p>
+                            <select v-model="form.post_category_id"
+                                class="w-full rounded-md px-3 py-3 font-body text-sm outline-none focus:ring-2 focus:ring-primary-fixed-dim"
+                                style="background-color: #ebe8e3; border: none;">
+                                <option value="">— Sem categoria —</option>
+                                <option v-for="cat in postCategories" :key="cat.id" :value="cat.id">
+                                    {{ cat.name_pt }}{{ cat.name_en ? ` / ${cat.name_en}` : '' }}
+                                </option>
+                            </select>
                         </div>
 
                         <div class="space-y-2">

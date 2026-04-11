@@ -18,7 +18,7 @@ class Post extends Model
         'featured_image',
         'meta_title_pt', 'meta_title_en',
         'meta_description_pt', 'meta_description_en',
-        'og_image', 'user_id', 'published_at',
+        'og_image', 'user_id', 'post_category_id', 'published_at',
     ];
 
     protected $casts = [
@@ -28,6 +28,11 @@ class Post extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function postCategory(): BelongsTo
+    {
+        return $this->belongsTo(PostCategory::class);
     }
 
     public function photos(): HasMany

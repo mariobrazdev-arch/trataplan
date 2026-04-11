@@ -2,91 +2,305 @@
 import SeoHead from '@/Components/Shared/SeoHead.vue';
 import { Link } from '@inertiajs/vue3';
 import { useLocale } from '@/composables/useLocale';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
-    posts: Object,
+    posts: Object,          // LengthAwarePaginator
+    postCategories: Array,
     seo: Object,
 });
 
 const { locale, t } = useLocale();
+
+// ── Filtro de categoria (client-side dentro da página atual) ────
+const activeCategory = ref(null);
+
+const filteredPosts = computed(() => {
+    const all = props.posts?.data ?? [];
+    if (activeCategory.value === null) return all;
+    return all.filter(p => p.post_category_id === activeCategory.value);
+});
+
+// ── Busca ───────────────────────────────────────────────────────
+const search = ref('');
+
+const visiblePosts = computed(() => {
+    if (!search.value.trim()) return filteredPosts.value;
+    const q = search.value.toLowerCase();
+    return filteredPosts.value.filter(p =>
+        p.title?.toLowerCase().includes(q) ||
+        p.excerpt?.toLowerCase().includes(q)
+    );
+});
+
+// ── Layout: destaque + lateral + resto ─────────────────────────
+const featuredPost   = computed(() => visiblePosts.value[0] ?? null);
+const secondPost     = computed(() => visiblePosts.value[1] ?? null);
+const remainingPosts = computed(() => visiblePosts.value.slice(2));
+
+const pagination = computed(() => props.posts);
+
+const fallback = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=70';
+
+function postUrl(post) {
+    const prefix = locale.value === 'en' ? '/en' : '';
+    return `${prefix}/blog/${post.slug}`;
+}
 </script>
 
 <template>
     <SeoHead v-bind="seo" />
 
-    <div class="pt-28 pb-20" style="background-color: #fcf9f4;">
-        <div class="container mx-auto px-6">
-            <!-- Header -->
-            <div class="text-center mb-16">
-                <span class="font-bold tracking-widest text-sm uppercase mb-3 block" style="font-family: Manrope, sans-serif; color: #6a5e33;">Blog</span>
-                <h1 class="text-4xl md:text-5xl font-bold" style="font-family: Manrope, sans-serif; color: #012d1d;">
-                    {{ t('Dicas e Novidades', 'Tips & News') }}
-                </h1>
-                <div class="w-24 h-1 mx-auto mt-6" style="background-color: #6a5e33;"></div>
+    <div class="min-h-screen pt-28 pb-24" style="background-color: #fcf9f4;">
+        <div class="max-w-6xl mx-auto px-6">
+
+            <!-- ── Page header ──────────────────────────────────── -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div>
+                    <span class="block font-bold tracking-[0.25em] text-xs uppercase mb-3"
+                        style="font-family: Manrope, sans-serif; color: #6a5e33;">
+                        {{ t('DIÁRIO DE CAMPO', 'FIELD JOURNAL') }}
+                    </span>
+                    <h1 class="text-4xl md:text-5xl font-black leading-tight"
+                        style="font-family: Manrope, sans-serif; color: #012d1d;">
+                        {{ t('Novidades, Dicas', 'News, Tips') }}<br>
+                        <span style="color: #6a5e33;">{{ t('e Bastidores.', 'and Behind the Scenes.') }}</span>
+                    </h1>
+                </div>
+                <div class="flex items-end">
+                    <p class="text-lg leading-relaxed font-body italic"
+                        style="font-family: Newsreader, serif; color: #5d4c40;">
+                        {{ t(
+                            'Explore projetos, técnicas sustentáveis e novidades sobre madeira tratada e paisagismo.',
+                            'Explore projects, sustainable techniques and updates on treated wood and landscaping.'
+                        ) }}
+                    </p>
+                </div>
             </div>
 
-            <!-- Empty state -->
-            <div v-if="!posts?.data?.length" class="text-center py-24">
-                <span class="material-symbols-outlined text-6xl mb-4 block" style="color: #c1c8c2;">article</span>
-                <p style="font-family: Newsreader, serif; color: #717973;">
-                    {{ t('Nenhuma publicação ainda.', 'No posts yet.') }}
+            <!-- ── Filtros + busca ──────────────────────────────── -->
+            <div class="flex flex-wrap items-center gap-3 mb-10">
+                <button
+                    @click="activeCategory = null"
+                    class="px-5 py-2 rounded-full text-sm font-bold transition-all"
+                    style="font-family: Manrope, sans-serif;"
+                    :style="activeCategory === null
+                        ? 'background-color:#012d1d; color:#fff;'
+                        : 'background-color:#ebe8e3; color:#414844;'">
+                    {{ t('Todas', 'All') }}
+                </button>
+                <button
+                    v-for="cat in postCategories"
+                    :key="cat.id"
+                    @click="activeCategory = cat.id"
+                    class="px-5 py-2 rounded-full text-sm font-bold transition-all"
+                    style="font-family: Manrope, sans-serif;"
+                    :style="activeCategory === cat.id
+                        ? 'background-color:#012d1d; color:#fff;'
+                        : 'background-color:#ebe8e3; color:#414844;'">
+                    {{ cat.name }}
+                </button>
+
+                <div class="flex-1 hidden sm:block"></div>
+
+                <!-- Busca -->
+                <div class="flex items-center gap-2 px-4 py-2 rounded-full w-full sm:w-auto"
+                    style="background-color:#ebe8e3; min-width:200px;">
+                    <span class="material-symbols-outlined text-base" style="color:#9e9e9e;">search</span>
+                    <input
+                        v-model="search"
+                        type="text"
+                        :placeholder="t('Buscar artigo...', 'Search post...')"
+                        class="bg-transparent outline-none text-sm flex-1"
+                        style="font-family: Manrope, sans-serif; color: #414844;" />
+                </div>
+            </div>
+
+            <!-- ── Sem resultados ───────────────────────────────── -->
+            <div v-if="!visiblePosts.length" class="py-24 text-center">
+                <span class="material-symbols-outlined text-5xl block mb-3" style="color:#c1c8c2;">article</span>
+                <p class="font-body italic text-lg" style="color:#9e9e9e;">
+                    {{ t('Nenhuma postagem encontrada.', 'No posts found.') }}
                 </p>
             </div>
 
-            <!-- Posts grid -->
-            <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-                <article v-for="post in posts.data" :key="post.id" class="flex flex-col rounded-xl overflow-hidden" style="background-color: #ffffff;">
-                    <Link :href="(locale === 'en' ? '/en/blog/' : '/blog/') + post.slug">
-                        <div class="h-48 overflow-hidden">
+            <!-- ── Grid de posts ────────────────────────────────── -->
+            <div v-else class="space-y-6">
+
+                <!-- Linha 1: destaque grande (2/3) + card lateral (1/3) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                    <!-- Post destaque -->
+                    <Link v-if="featuredPost"
+                        :href="postUrl(featuredPost)"
+                        class="md:col-span-2 relative rounded-2xl overflow-hidden group block"
+                        style="min-height: 420px; background-color:#012d1d;">
+                        <img
+                            :src="featuredPost.featured_image_url || fallback"
+                            :alt="featuredPost.title"
+                            class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            @error="$event.target.src = fallback" />
+                        <div class="absolute inset-0"
+                            style="background: linear-gradient(to top, rgba(1,45,29,0.90) 0%, rgba(1,45,29,0.25) 55%, transparent 100%);"></div>
+                        <div class="absolute bottom-0 left-0 right-0 p-7">
+                            <span v-if="featuredPost.category_label"
+                                class="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4"
+                                style="font-family:Manrope,sans-serif; background-color:rgba(255,255,255,0.15); color:#c1ecd4; backdrop-filter:blur(4px);">
+                                {{ featuredPost.category_label }}
+                            </span>
+                            <h2 class="text-2xl md:text-3xl font-black text-white leading-snug mb-3"
+                                style="font-family:Manrope,sans-serif;">
+                                {{ featuredPost.title }}
+                            </h2>
+                            <p v-if="featuredPost.excerpt"
+                                class="text-sm text-white/75 leading-relaxed mb-5 line-clamp-2"
+                                style="font-family:Newsreader,serif;">
+                                {{ featuredPost.excerpt }}
+                            </p>
+                            <span class="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wider"
+                                style="font-family:Manrope,sans-serif; color:#c1ecd4;">
+                                {{ t('Ler artigo completo', 'Read full article') }}
+                                <span class="material-symbols-outlined text-base">arrow_forward</span>
+                            </span>
+                        </div>
+                    </Link>
+
+                    <!-- Card lateral -->
+                    <Link v-if="secondPost"
+                        :href="postUrl(secondPost)"
+                        class="rounded-2xl overflow-hidden group flex flex-col"
+                        style="background-color:#ffffff;">
+                        <div class="relative overflow-hidden" style="height:200px;">
                             <img
-                                v-if="post.featured_image_url"
-                                :src="post.featured_image_url"
+                                :src="secondPost.featured_image_url || fallback"
+                                :alt="secondPost.title"
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                @error="$event.target.src = fallback" />
+                        </div>
+                        <div class="p-6 flex flex-col flex-1">
+                            <span v-if="secondPost.category_label"
+                                class="text-[10px] font-bold uppercase tracking-[0.2em] mb-2 block"
+                                style="font-family:Manrope,sans-serif; color:#6a5e33;">
+                                {{ secondPost.category_label }}
+                            </span>
+                            <h3 class="text-lg font-extrabold leading-snug mb-2"
+                                style="font-family:Manrope,sans-serif; color:#012d1d;">
+                                {{ secondPost.title }}
+                            </h3>
+                            <p v-if="secondPost.excerpt"
+                                class="text-sm leading-relaxed line-clamp-3 flex-1"
+                                style="font-family:Newsreader,serif; color:#5d4c40;">
+                                {{ secondPost.excerpt }}
+                            </p>
+                            <span class="mt-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest"
+                                style="font-family:Manrope,sans-serif; color:#012d1d;">
+                                {{ t('Explorar notícia', 'Read more') }}
+                                <span class="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
+                            </span>
+                        </div>
+                    </Link>
+                </div>
+
+                <!-- Linhas seguintes: grid de 3 -->
+                <div v-if="remainingPosts.length"
+                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    <Link
+                        v-for="post in remainingPosts"
+                        :key="post.id"
+                        :href="postUrl(post)"
+                        class="rounded-2xl overflow-hidden group flex flex-col"
+                        style="background-color:#ffffff;">
+                        <div class="relative overflow-hidden" style="height:190px;">
+                            <img
+                                :src="post.featured_image_url || fallback"
                                 :alt="post.title"
-                                class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                            />
-                            <div v-else class="w-full h-full flex items-center justify-center" style="background-color: #f0ede8;">
-                                <span class="material-symbols-outlined text-5xl" style="color: #c1c8c2;">article</span>
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                @error="$event.target.src = fallback" />
+                        </div>
+                        <div class="p-5 flex flex-col flex-1">
+                            <span v-if="post.category_label"
+                                class="text-[10px] font-bold uppercase tracking-[0.2em] mb-2 block"
+                                style="font-family:Manrope,sans-serif; color:#6a5e33;">
+                                {{ post.category_label }}
+                            </span>
+                            <h3 class="text-base font-extrabold leading-snug mb-2"
+                                style="font-family:Manrope,sans-serif; color:#012d1d;">
+                                {{ post.title }}
+                            </h3>
+                            <p v-if="post.excerpt"
+                                class="text-sm leading-relaxed line-clamp-3 flex-1"
+                                style="font-family:Newsreader,serif; color:#5d4c40;">
+                                {{ post.excerpt }}
+                            </p>
+                            <div class="mt-4 flex items-center justify-between">
+                                <span class="text-[10px] font-label uppercase tracking-widest"
+                                    style="color:#9e9e9e;">{{ post.published_at }}</span>
+                                <span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1"
+                                    style="color:#012d1d;">arrow_forward</span>
                             </div>
                         </div>
                     </Link>
-                    <div class="p-6 flex flex-col flex-grow">
-                        <span class="text-xs uppercase tracking-widest mb-2" style="font-family: Manrope, sans-serif; color: #6a5e33;">{{ post.published_at }}</span>
-                        <Link :href="(locale === 'en' ? '/en/blog/' : '/blog/') + post.slug">
-                            <h2 class="font-bold text-xl mb-3 hover:opacity-70 transition-colors leading-tight" style="font-family: Manrope, sans-serif; color: #012d1d;">
-                                {{ post.title }}
-                            </h2>
-                        </Link>
-                        <p class="text-sm leading-relaxed flex-grow" style="font-family: Newsreader, serif; color: #414844;">{{ post.excerpt }}</p>
-                        <Link
-                            :href="(locale === 'en' ? '/en/blog/' : '/blog/') + post.slug"
-                            class="mt-4 inline-flex items-center gap-1 font-bold text-sm hover:gap-2 transition-all"
-                            style="font-family: Manrope, sans-serif; color: #012d1d;"
-                        >
-                            {{ t('Ler mais', 'Read more') }}
-                            <span class="material-symbols-outlined text-base">arrow_forward</span>
-                        </Link>
-                    </div>
-                </article>
+                </div>
             </div>
 
-            <!-- Pagination -->
-            <div v-if="posts?.links?.length > 3" class="flex justify-center gap-2 flex-wrap">
-                <Link
-                    v-for="link in posts.links"
-                    :key="link.label"
-                    :href="link.url || '#'"
-                    v-html="link.label"
-                    class="px-4 py-2 rounded-lg text-sm font-bold transition-all"
-                    :class="link.active
-                        ? 'text-white'
-                        : link.url
-                            ? 'hover:opacity-80'
-                            : 'opacity-30 cursor-not-allowed'"
-                    :style="link.active
-                        ? 'font-family: Manrope, sans-serif; background-color: #012d1d; color: white;'
-                        : 'font-family: Manrope, sans-serif; background-color: #f0ede8; color: #012d1d;'"
-                />
+            <!-- ── Paginação ────────────────────────────────────── -->
+            <div v-if="pagination && pagination.last_page > 1"
+                class="mt-14 flex items-center justify-between">
+                <p class="text-sm" style="font-family:Manrope,sans-serif; color:#9e9e9e;">
+                    {{ t('Página', 'Page') }}
+                    <strong style="color:#012d1d;">{{ String(pagination.current_page).padStart(2,'0') }}</strong>
+                    {{ t('de', 'of') }}
+                    <strong style="color:#012d1d;">{{ String(pagination.last_page).padStart(2,'0') }}</strong>
+                </p>
+
+                <div class="flex items-center gap-2">
+                    <Link
+                        v-if="pagination.prev_page_url"
+                        :href="pagination.prev_page_url"
+                        class="w-10 h-10 flex items-center justify-center rounded-full transition-all"
+                        style="background-color:#ebe8e3; color:#012d1d;"
+                        @mouseenter="$event.currentTarget.style.backgroundColor='#012d1d'; $event.currentTarget.style.color='#fff'"
+                        @mouseleave="$event.currentTarget.style.backgroundColor='#ebe8e3'; $event.currentTarget.style.color='#012d1d'">
+                        <span class="material-symbols-outlined text-base">chevron_left</span>
+                    </Link>
+                    <span v-else class="w-10 h-10 flex items-center justify-center rounded-full opacity-30"
+                        style="background-color:#ebe8e3; color:#012d1d;">
+                        <span class="material-symbols-outlined text-base">chevron_left</span>
+                    </span>
+
+                    <template v-for="link in pagination.links" :key="link.label">
+                        <Link
+                            v-if="link.url && !link.label.includes('&laquo;') && !link.label.includes('&raquo;')"
+                            :href="link.url"
+                            class="w-10 h-10 flex items-center justify-center rounded-full text-sm font-bold transition-all"
+                            style="font-family:Manrope,sans-serif;"
+                            :style="link.active ? 'background-color:#012d1d; color:#fff;' : 'background-color:#ebe8e3; color:#414844;'">
+                            {{ link.label }}
+                        </Link>
+                        <span
+                            v-else-if="!link.url && !link.label.includes('&laquo;') && !link.label.includes('&raquo;')"
+                            class="w-10 h-10 flex items-center justify-center rounded-full text-sm font-bold"
+                            style="font-family:Manrope,sans-serif; background-color:#012d1d; color:#fff;">
+                            {{ link.label }}
+                        </span>
+                    </template>
+
+                    <Link
+                        v-if="pagination.next_page_url"
+                        :href="pagination.next_page_url"
+                        class="w-10 h-10 flex items-center justify-center rounded-full transition-all"
+                        style="background-color:#ebe8e3; color:#012d1d;"
+                        @mouseenter="$event.currentTarget.style.backgroundColor='#012d1d'; $event.currentTarget.style.color='#fff'"
+                        @mouseleave="$event.currentTarget.style.backgroundColor='#ebe8e3'; $event.currentTarget.style.color='#012d1d'">
+                        <span class="material-symbols-outlined text-base">chevron_right</span>
+                    </Link>
+                    <span v-else class="w-10 h-10 flex items-center justify-center rounded-full opacity-30"
+                        style="background-color:#ebe8e3; color:#012d1d;">
+                        <span class="material-symbols-outlined text-base">chevron_right</span>
+                    </span>
+                </div>
             </div>
+
         </div>
     </div>
 </template>

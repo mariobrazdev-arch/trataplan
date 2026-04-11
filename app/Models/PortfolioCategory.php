@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 class PortfolioCategory extends Model
 {
     protected $fillable = [
+        'product_category_id',
         'name_pt', 'name_en',
         'description_pt', 'description_en',
         'cover_photo',
@@ -17,6 +19,11 @@ class PortfolioCategory extends Model
     ];
 
     protected $casts = ['is_active' => 'boolean'];
+
+    public function productCategory(): BelongsTo
+    {
+        return $this->belongsTo(ProductCategory::class, 'product_category_id');
+    }
 
     public function products(): HasMany
     {

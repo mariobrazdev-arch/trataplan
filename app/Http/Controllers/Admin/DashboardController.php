@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContactMessage;
-use App\Models\Page;
 use App\Models\Partner;
 use App\Models\Post;
 use Inertia\Inertia;
@@ -20,7 +19,6 @@ class DashboardController extends Controller
                 'published_posts' => Post::published()->count(),
                 'partners_count' => Partner::where('is_active', true)->count(),
                 'unread_messages' => ContactMessage::unread()->count(),
-                'pages_count' => Page::count(),
             ],
             'recent_messages' => ContactMessage::latest()->take(5)->get()->map(fn ($m) => [
                 'id' => $m->id,
