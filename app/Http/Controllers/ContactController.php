@@ -36,9 +36,35 @@ class ContactController extends Controller
             'locale' => App::getLocale(),
         ]);
 
-        $contactEmail = Setting::get('contact_email', config('mail.from.address'));
+        $contactEmail = Setting::get('contact_email', 'trataplan@trataplan.com.br');
 
-        Mail::to($contactEmail)->queue(new ContactFormMail($message));
+        // Se o formulário enviou o e-mail da unidade selecionada, usa ele; caso contrário usa o padrão
+        $toEmail = filter_var($request->input('unit_email'), FILTER_VALIDATE_EMAIL)
+            ? $request->input('unit_email')
+            : $contactEmail;
+
+        // Aplica config SMTP do banco se configurada
+        $mailHost = Setting::get('mail_host');
+        if ($mailHost) {
+            $port       = (int) Setting::get('mail_port', 587);
+            // Porta 465 sempre usa SSL; normaliza "smtps"/"ssl" → "ssl", qualquer outra → "tls"
+            $rawEnc     = strtolower(Setting::get('mail_encryption', 'tls'));
+            $encryption = ($port === 465 || in_array($rawEnc, ['ssl', 'smtps'])) ? 'ssl' : 'tls';
+
+            config([
+                'mail.mailers.smtp.host'       => $mailHost,
+                'mail.mailers.smtp.port'       => $port,
+                'mail.mailers.smtp.username'   => Setting::get('mail_username'),
+                'mail.mailers.smtp.password'   => Setting::get('mail_password'),
+                'mail.mailers.smtp.encryption' => $encryption,
+                'mail.mailers.smtp.scheme'     => null,
+                'mail.from.address'            => Setting::get('mail_from_address', $contactEmail),
+                'mail.from.name'               => Setting::get('mail_from_name', 'Trataplan'),
+                'mail.default'                 => 'smtp',
+            ]);
+        }
+
+        Mail::to($toEmail)->queue(new ContactFormMail($message));
 
         return back()->with('success', true);
     }

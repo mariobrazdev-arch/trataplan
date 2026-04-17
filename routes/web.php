@@ -27,15 +27,17 @@ use Illuminate\Support\Facades\Route;
 | Public routes — Portuguese (default)
 |--------------------------------------------------------------------------
 */
-Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/sobre', [AboutController::class, 'show'])->name('about');
-Route::get('/catalogo', [CatalogController::class, 'index'])->name('catalog');
-Route::get('/catalogo/produto/{category}', [CatalogController::class, 'showProduct'])->name('catalog.product');
-Route::get('/catalogo/servico/{service}', [CatalogController::class, 'showService'])->name('catalog.service');
-Route::get('/blog', [PostController::class, 'index'])->name('blog');
-Route::get('/blog/{slug}', [PostController::class, 'show'])->name('blog.show');
-Route::get('/parceiros', [PartnerController::class, 'index'])->name('partners');
-Route::get('/contato', [ContactController::class, 'show'])->name('contact');
+Route::middleware(\App\Http\Middleware\SetPublicCacheHeaders::class)->group(function () {
+    Route::get('/', [HomeController::class, 'index'])->name('home');
+    Route::get('/sobre', [AboutController::class, 'show'])->name('about');
+    Route::get('/catalogo', [CatalogController::class, 'index'])->name('catalog');
+    Route::get('/catalogo/produto/{category}', [CatalogController::class, 'showProduct'])->name('catalog.product');
+    Route::get('/catalogo/servico/{service}', [CatalogController::class, 'showService'])->name('catalog.service');
+    Route::get('/blog', [PostController::class, 'index'])->name('blog');
+    Route::get('/blog/{slug}', [PostController::class, 'show'])->name('blog.show');
+    Route::get('/parceiros', [PartnerController::class, 'index'])->name('partners');
+    Route::get('/contato', [ContactController::class, 'show'])->name('contact');
+});
 Route::post('/contato', [ContactController::class, 'store'])->name('contact.store');
 
 /*
@@ -43,7 +45,7 @@ Route::post('/contato', [ContactController::class, 'store'])->name('contact.stor
 | Public routes — English (/en prefix)
 |--------------------------------------------------------------------------
 */
-Route::prefix('en')->name('en.')->group(function () {
+Route::middleware(\App\Http\Middleware\SetPublicCacheHeaders::class)->prefix('en')->name('en.')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/about', [AboutController::class, 'show'])->name('about');
     Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
@@ -53,8 +55,8 @@ Route::prefix('en')->name('en.')->group(function () {
     Route::get('/blog/{slug}', [PostController::class, 'show'])->name('blog.show');
     Route::get('/partners', [PartnerController::class, 'index'])->name('partners');
     Route::get('/contact', [ContactController::class, 'show'])->name('contact');
-    Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 });
+Route::prefix('en')->name('en.')->post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 /*
 |--------------------------------------------------------------------------

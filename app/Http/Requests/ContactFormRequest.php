@@ -14,17 +14,28 @@ class ContactFormRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:20'],
             'subject' => ['nullable', 'string', 'max:200'],
             'message' => ['required', 'string', 'min:10', 'max:2000'],
+            'unit_email' => ['nullable', 'email', 'max:150'],
         ];
     }
 
     public function messages(): array
     {
+        if (app()->getLocale() === 'en') {
+            return [
+                'name.required'    => 'Name is required.',
+                'email.required'   => 'Email is required.',
+                'email.email'      => 'Please enter a valid email address.',
+                'message.required' => 'Message is required.',
+                'message.min'      => 'Message must be at least 10 characters.',
+            ];
+        }
+
         return [
-            'name.required' => __('validation.name_required'),
-            'email.required' => __('validation.email_required'),
-            'email.email' => __('validation.email_invalid'),
-            'message.required' => __('validation.message_required'),
-            'message.min' => __('validation.message_min'),
+            'name.required'    => 'Nome é obrigatório.',
+            'email.required'   => 'E-mail é obrigatório.',
+            'email.email'      => 'Por favor, informe um e-mail válido.',
+            'message.required' => 'A mensagem é obrigatória.',
+            'message.min'      => 'A mensagem deve ter pelo menos 10 caracteres.',
         ];
     }
 }

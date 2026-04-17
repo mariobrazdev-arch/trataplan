@@ -1,41 +1,104 @@
 <script setup>
 import SeoHead from '@/Components/Shared/SeoHead.vue';
 import { useForm, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useLocale } from '@/composables/useLocale';
 import { useSettings } from '@/composables/useSettings';
+import { useWhatsAppPicker } from '@/composables/useWhatsAppPicker';
 
 const props = defineProps({ seo: Object });
 
 const { locale, t } = useLocale();
-const { whatsappUrl, telegramLink, setting } = useSettings();
-const page   = usePage();
+const { telegramLink, setting, companyUnits, logoTransparentUrl } = useSettings();
+const { open: openWhatsApp } = useWhatsAppPicker();
+const page    = usePage();
 const success = computed(() => page.props.flash?.success);
 
-const address = computed(() => setting('contact_address', 'SC-283, Planalto Alegre - SC, 89882-000'));
-const phone   = computed(() => setting('contact_phone',   '+55 49 9960-0329'));
-const email   = computed(() => setting('contact_email',   'trataplan@trataplan.com.br'));
-
-const projectTypes = computed(() => [
-    { value: '',                      label: t('Selecione um interesse...', 'Select an interest...') },
-    { value: 'decks-pergolados',      label: t('Decks & Pergolados',        'Decks & Pergolas') },
-    { value: 'construcao-civil',      label: t('Construção Civil',           'Civil Construction') },
-    { value: 'cercas-currais',        label: t('Cercas e Currais',           'Fences & Pens') },
-    { value: 'paisagismo',            label: t('Paisagismo',                 'Landscaping') },
-    { value: 'outro',                 label: t('Outro / Dúvida geral',       'Other / General question') },
-]);
-
-const form = useForm({
-    name:         '',
-    email:        '',
-    phone:        '',
-    subject:      '',
-    message:      '',
+// ── Unidades do banco ────────────────────────────────────────────────────────
+const units = computed(() => {
+    if (companyUnits.value.length > 0) return companyUnits.value;
+    return [{
+        tipo: 'matriz', label: 'Matriz',
+        address: setting('contact_address', 'SC-283, Planalto Alegre – SC, 89882-000'),
+        phone:   setting('contact_phone',   '+55 49 9960-0329'),
+        email:   setting('contact_email',   'trataplan@trataplan.com.br'),
+        whatsapp: setting('whatsapp_number', ''),
+        telegram: '',
+    }];
 });
 
+const activeUnitTab = ref(0);
+const activeMapTab  = ref(0);
+const activeUnit    = computed(() => units.value[activeUnitTab.value] ?? units.value[0]);
+const activeMapUnit = computed(() => units.value[activeMapTab.value]  ?? units.value[0]);
+
+function mapsEmbedUrl(unit) {
+    if (unit?.maps_link) return unit.maps_link;
+    return null;
+}
+function mapsDirectionsUrl(address) {
+    if (!address) return '#';
+    return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(address);
+}
+
+// ── Formulário ───────────────────────────────────────────────────────────────
+const projectTypes = computed(() => [
+    { value: '',                 label: t('Selecione um interesse...', 'Select an interest...') },
+    { value: 'decks-pergolados', label: t('Decks & Pergolados',        'Decks & Pergolas') },
+    { value: 'construcao-civil', label: t('Construção Civil',           'Civil Construction') },
+    { value: 'cercas-currais',   label: t('Cercas e Currais',           'Fences & Pens') },
+    { value: 'paisagismo',       label: t('Paisagismo',                 'Landscaping') },
+    { value: 'outro',            label: t('Outro / Dúvida geral',       'Other / General question') },
+]);
+
+const form = useForm({ name: '', email: '', phone: '', subject: '', message: '', unit_email: '' });
+
+// Inicializa unit_email com o email da primeira unidade que tiver email
+const defaultUnitEmail = computed(() => {
+    const u = units.value.find(u => u.email) ?? units.value[0];
+    return u?.email || '';
+});
+
+const budgetForm = useForm({ name: '', email: '', message: '', subject: 'orcamento', unit_email: '' });
+const budgetSuccess = ref(false);
+
+// Sincroniza unit_email do orçamento com a aba do mapa ativa
+const defaultBudgetUnitEmail = computed(() => {
+    const u = units.value[activeMapTab.value] ?? units.value.find(u => u.email) ?? units.value[0];
+    return u?.email || '';
+});
+
+watch(activeMapTab, () => {
+    budgetForm.unit_email = defaultBudgetUnitEmail.value;
+}, { immediate: true });
+
 function submit() {
+    if (!form.unit_email && defaultUnitEmail.value) {
+        form.unit_email = defaultUnitEmail.value;
+    }
     const action = locale.value === 'en' ? '/en/contact' : '/contato';
     form.post(action, { onSuccess: () => form.reset() });
+}
+
+function submitBudget() {
+    if (!budgetForm.unit_email && defaultBudgetUnitEmail.value) {
+        budgetForm.unit_email = defaultBudgetUnitEmail.value;
+    }
+    const action = locale.value === 'en' ? '/en/contact' : '/contato';
+    budgetForm.post(action, {
+        onSuccess: () => {
+            budgetForm.reset();
+            budgetForm.subject = 'orcamento';
+            budgetSuccess.value = true;
+            setTimeout(() => { budgetSuccess.value = false; }, 5000);
+        }
+    });
+}
+
+function fieldStyle(hasError) {
+    return hasError
+        ? 'background-color: #fff0f0; border: 2px solid #ba1a1a;'
+        : 'background-color: #edeae5; border: 2px solid transparent;';
 }
 </script>
 
@@ -46,7 +109,6 @@ function submit() {
     <section class="pt-28 pb-0" style="background-color: #fcf9f4;">
         <div class="container mx-auto px-6 max-w-7xl">
 
-            <!-- Label topo -->
             <div class="mb-10">
                 <span class="inline-block text-xs font-black uppercase tracking-[0.3em]"
                       style="color: #fbbf24; font-family: Manrope, sans-serif; background-color: rgba(251,191,36,0.12); padding: 4px 12px; border-radius: 99px;">
@@ -56,7 +118,7 @@ function submit() {
 
             <div class="grid lg:grid-cols-[1fr_380px] gap-16 items-start pb-24">
 
-                <!-- ── COLUNA ESQUERDA: cabeçalho + formulário ── -->
+                <!-- ── COLUNA ESQUERDA: formulário ── -->
                 <div>
                     <h1 class="font-headline font-extrabold leading-[1.05] tracking-tight mb-4"
                         style="font-size: clamp(2.5rem, 5vw, 4rem); color: #012d1d;">
@@ -92,16 +154,13 @@ function submit() {
                         <div>
                             <label class="block text-xs font-black uppercase tracking-widest mb-2"
                                    style="font-family: Manrope, sans-serif; color: #9a8b7a;">
-                                {{ t('Seu Nome', 'Your Name') }}
+                                {{ t('Seu Nome', 'Your Name') }} <span style="color:#ba1a1a;">*</span>
                             </label>
-                            <input
-                                v-model="form.name"
-                                type="text" required
+                            <input v-model="form.name" type="text"
                                 class="w-full px-5 py-4 rounded-xl outline-none transition-all focus:ring-2"
-                                style="background-color: #edeae5; border: none; font-family: Newsreader, serif; font-size: 1rem; color: #1c1c19; --tw-ring-color: #012d1d;"
-                                :placeholder="t('Nome completo', 'Full name')"
-                            />
-                            <p v-if="form.errors.name" class="mt-1.5 text-xs" style="color: #ba1a1a;">{{ form.errors.name }}</p>
+                                :style="fieldStyle(form.errors.name)"
+                                :placeholder="t('Nome completo', 'Full name')" />
+                            <p v-if="form.errors.name" class="mt-1.5 text-xs font-semibold" style="color: #ba1a1a;">{{ form.errors.name }}</p>
                         </div>
 
                         <!-- Email + Telefone -->
@@ -109,29 +168,45 @@ function submit() {
                             <div>
                                 <label class="block text-xs font-black uppercase tracking-widest mb-2"
                                        style="font-family: Manrope, sans-serif; color: #9a8b7a;">
-                                    Email
+                                    Email <span style="color:#ba1a1a;">*</span>
                                 </label>
-                                <input
-                                    v-model="form.email"
-                                    type="email" required
+                                <input v-model="form.email" type="email"
                                     class="w-full px-5 py-4 rounded-xl outline-none transition-all focus:ring-2"
-                                    style="background-color: #edeae5; border: none; font-family: Newsreader, serif; font-size: 1rem; color: #1c1c19;"
-                                    placeholder="seu@email.com"
-                                />
-                                <p v-if="form.errors.email" class="mt-1.5 text-xs" style="color: #ba1a1a;">{{ form.errors.email }}</p>
+                                    :style="fieldStyle(form.errors.email)"
+                                    placeholder="seu@email.com" />
+                                <p v-if="form.errors.email" class="mt-1.5 text-xs font-semibold" style="color: #ba1a1a;">{{ form.errors.email }}</p>
                             </div>
                             <div>
                                 <label class="block text-xs font-black uppercase tracking-widest mb-2"
                                        style="font-family: Manrope, sans-serif; color: #9a8b7a;">
                                     {{ t('Telefone', 'Phone') }}
                                 </label>
-                                <input
-                                    v-model="form.phone"
-                                    type="tel"
+                                <input v-model="form.phone" type="tel"
                                     class="w-full px-5 py-4 rounded-xl outline-none transition-all focus:ring-2"
-                                    style="background-color: #edeae5; border: none; font-family: Newsreader, serif; font-size: 1rem; color: #1c1c19;"
-                                    placeholder="+55 49 9960-0329"
-                                />
+                                    :style="fieldStyle(form.errors.phone)"
+                                    placeholder="+55 49 9960-0329" />
+                                <p v-if="form.errors.phone" class="mt-1.5 text-xs font-semibold" style="color: #ba1a1a;">{{ form.errors.phone }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Unidade de Atendimento -->
+                        <div v-if="units.length > 1">
+                            <label class="block text-xs font-black uppercase tracking-widest mb-2"
+                                   style="font-family: Manrope, sans-serif; color: #9a8b7a;">
+                                {{ t('Unidade de Atendimento', 'Service Unit') }} <span style="color:#ba1a1a;">*</span>
+                            </label>
+                            <div class="relative">
+                                <select v-model="form.unit_email"
+                                    class="w-full px-5 py-4 rounded-xl outline-none appearance-none transition-all focus:ring-2 cursor-pointer"
+                                    :style="fieldStyle(form.errors.unit_email)"
+                                    style="font-family: Manrope, sans-serif; font-size: 0.95rem; color: #1c1c19;">
+                                    <option v-for="(unit, i) in units" :key="i" :value="unit.email || ''">
+                                        {{ unit.label || (unit.tipo === 'matriz' ? t('Matriz (Sede)', 'Headquarters') : t('Filial', 'Branch')) }}
+                                        {{ unit.address ? ' — ' + unit.address.split(',')[0] : '' }}
+                                    </option>
+                                </select>
+                                <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-xl"
+                                      style="color: #9a8b7a;">expand_more</span>
                             </div>
                         </div>
 
@@ -142,141 +217,108 @@ function submit() {
                                 {{ t('Tipo de Projeto', 'Project Type') }}
                             </label>
                             <div class="relative">
-                                <select
-                                    v-model="form.subject"
+                                <select v-model="form.subject"
                                     class="w-full px-5 py-4 rounded-xl outline-none appearance-none transition-all focus:ring-2 cursor-pointer"
-                                    style="background-color: #edeae5; border: none; font-family: Manrope, sans-serif; font-size: 0.95rem; color: #1c1c19;"
-                                >
-                                    <option v-for="opt in projectTypes" :key="opt.value" :value="opt.value">
-                                        {{ opt.label }}
-                                    </option>
+                                    :style="fieldStyle(form.errors.subject)"
+                                    style="font-family: Manrope, sans-serif; font-size: 0.95rem; color: #1c1c19;">
+                                    <option v-for="opt in projectTypes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                                 </select>
                                 <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-xl"
                                       style="color: #9a8b7a;">expand_more</span>
                             </div>
+                            <p v-if="form.errors.subject" class="mt-1.5 text-xs font-semibold" style="color: #ba1a1a;">{{ form.errors.subject }}</p>
                         </div>
 
                         <!-- Mensagem -->
                         <div>
                             <label class="block text-xs font-black uppercase tracking-widest mb-2"
                                    style="font-family: Manrope, sans-serif; color: #9a8b7a;">
-                                {{ t('Mensagem', 'Message') }}
+                                {{ t('Mensagem', 'Message') }} <span style="color:#ba1a1a;">*</span>
                             </label>
-                            <textarea
-                                v-model="form.message"
-                                rows="5" required
+                            <textarea v-model="form.message" rows="5"
                                 class="w-full px-5 py-4 rounded-xl outline-none resize-none transition-all focus:ring-2"
-                                style="background-color: #edeae5; border: none; font-family: Newsreader, serif; font-size: 1rem; color: #1c1c19;"
-                                :placeholder="t('Descreva seu projeto ou dúvida em detalhes...', 'Describe your project or question in detail...')"
-                            ></textarea>
-                            <p v-if="form.errors.message" class="mt-1.5 text-xs" style="color: #ba1a1a;">{{ form.errors.message }}</p>
+                                :style="fieldStyle(form.errors.message)"
+                                :placeholder="t('Descreva seu projeto ou dúvida em detalhes...', 'Describe your project or question in detail...')">
+                            </textarea>
+                            <p v-if="form.errors.message" class="mt-1.5 text-xs font-semibold" style="color: #ba1a1a;">{{ form.errors.message }}</p>
                         </div>
 
                         <!-- Submit -->
-                        <button
-                            type="submit"
-                            :disabled="form.processing"
+                        <button type="submit" :disabled="form.processing"
                             class="group flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
-                            style="background-color: #012d1d; font-family: Manrope, sans-serif;"
-                        >
-                            <span v-if="form.processing"
-                                  class="material-symbols-outlined text-base animate-spin">autorenew</span>
+                            style="background-color: #012d1d; font-family: Manrope, sans-serif;">
+                            <span v-if="form.processing" class="material-symbols-outlined text-base animate-spin">autorenew</span>
                             {{ form.processing ? t('Enviando...', 'Sending...') : t('Enviar Mensagem', 'Send Message') }}
-                            <span v-if="!form.processing"
-                                  class="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">
-                                arrow_forward
-                            </span>
+                            <span v-if="!form.processing" class="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">arrow_forward</span>
                         </button>
                     </form>
                 </div>
 
-                <!-- ── COLUNA DIREITA: info + imagem ── -->
+                <!-- ── COLUNA DIREITA: unidades do banco ── -->
                 <div class="space-y-6 lg:pt-24">
 
-                    <!-- Cards de contato -->
-                    <div class="rounded-2xl overflow-hidden divide-y" style="background-color: #fff; divide-color: #f0ede8;">
+                    <!-- Abas de unidades -->
+                    <div v-if="units.length > 1" class="flex gap-1 rounded-xl p-1" style="background-color: #f0ede8;">
+                        <button v-for="(unit, i) in units" :key="i" type="button" @click="activeUnitTab = i"
+                            class="flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all"
+                            style="font-family: Manrope, sans-serif;"
+                            :style="activeUnitTab === i ? 'background-color: #012d1d; color: white;' : 'color: #717973;'">
+                            {{ unit.label || (unit.tipo === 'matriz' ? t('Matriz','HQ') : t('Filial','Branch')) }}
+                        </button>
+                    </div>
 
-                        <div class="flex items-start gap-4 p-5">
-                            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                                 style="background-color: #f0ede8;">
+                    <!-- Cards da unidade ativa -->
+                    <div class="rounded-2xl overflow-hidden" style="background-color: #fff;">
+                        <div v-if="activeUnit?.address" class="flex items-start gap-4 p-5" style="border-bottom: 1px solid #f0ede8;">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: #f0ede8;">
                                 <span class="material-symbols-outlined text-base" style="color: #012d1d;">location_on</span>
                             </div>
                             <div>
-                                <p class="text-xs font-black uppercase tracking-widest mb-1"
-                                   style="color: #9a8b7a; font-family: Manrope, sans-serif;">
-                                    {{ t('Endereço', 'Address') }}
-                                </p>
-                                <p class="text-sm leading-snug" style="color: #1c1c19; font-family: Newsreader, serif;">{{ address }}</p>
+                                <p class="text-xs font-black uppercase tracking-widest mb-1" style="color: #9a8b7a; font-family: Manrope, sans-serif;">{{ t('Endereço', 'Address') }}</p>
+                                <p class="text-sm leading-snug" style="color: #1c1c19; font-family: Newsreader, serif;">{{ activeUnit.address }}</p>
                             </div>
                         </div>
-
-                        <div class="flex items-start gap-4 p-5">
-                            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                                 style="background-color: #f0ede8;">
+                        <div v-if="activeUnit?.phone" class="flex items-start gap-4 p-5" style="border-bottom: 1px solid #f0ede8;">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: #f0ede8;">
                                 <span class="material-symbols-outlined text-base" style="color: #012d1d;">call</span>
                             </div>
                             <div>
-                                <p class="text-xs font-black uppercase tracking-widest mb-1"
-                                   style="color: #9a8b7a; font-family: Manrope, sans-serif;">
-                                    {{ t('Telefone', 'Phone') }}
-                                </p>
-                                <a :href="`tel:${phone.replace(/\D/g,'')}`"
-                                   class="text-sm font-semibold hover:underline"
-                                   style="color: #012d1d; font-family: Manrope, sans-serif;">
-                                    {{ phone }}
-                                </a>
+                                <p class="text-xs font-black uppercase tracking-widest mb-1" style="color: #9a8b7a; font-family: Manrope, sans-serif;">{{ t('Telefone', 'Phone') }}</p>
+                                <a :href="`tel:${activeUnit.phone.replace(/\D/g,'')}`" class="text-sm font-semibold hover:underline" style="color: #012d1d; font-family: Manrope, sans-serif;">{{ activeUnit.phone }}</a>
                             </div>
                         </div>
-
-                        <div class="flex items-start gap-4 p-5">
-                            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                                 style="background-color: #f0ede8;">
+                        <div v-if="activeUnit?.email" class="flex items-start gap-4 p-5" style="border-bottom: 1px solid #f0ede8;">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: #f0ede8;">
                                 <span class="material-symbols-outlined text-base" style="color: #012d1d;">mail</span>
                             </div>
                             <div>
-                                <p class="text-xs font-black uppercase tracking-widest mb-1"
-                                   style="color: #9a8b7a; font-family: Manrope, sans-serif;">
-                                    Email
-                                </p>
-                                <a :href="`mailto:${email}`"
-                                   class="text-sm hover:underline"
-                                   style="color: #012d1d; font-family: Manrope, sans-serif;">
-                                    {{ email }}
-                                </a>
+                                <p class="text-xs font-black uppercase tracking-widest mb-1" style="color: #9a8b7a; font-family: Manrope, sans-serif;">Email</p>
+                                <a :href="`mailto:${activeUnit.email}`" class="text-sm hover:underline" style="color: #012d1d; font-family: Manrope, sans-serif;">{{ activeUnit.email }}</a>
+                            </div>
+                        </div>
+                        <div v-if="activeUnit?.whatsapp" class="flex items-start gap-4 p-5">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background-color: #f0ede8;">
+                                <span class="material-symbols-outlined text-base" style="color: #012d1d;">chat</span>
+                            </div>
+                            <div>
+                                <p class="text-xs font-black uppercase tracking-widest mb-1" style="color: #9a8b7a; font-family: Manrope, sans-serif;">WhatsApp</p>
+                                <a :href="`https://wa.me/${activeUnit.whatsapp}`" target="_blank" rel="noopener" class="text-sm font-semibold hover:underline" style="color: #012d1d; font-family: Manrope, sans-serif;">{{ activeUnit.whatsapp }}</a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Imagem -->
-                    <div class="rounded-2xl overflow-hidden relative" style="height: 220px;">
-                        <img
-                            src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80"
-                            alt="Trataplan"
-                            class="w-full h-full object-cover"
-                        />
-                        <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(1,45,29,0.6) 0%, transparent 60%);"></div>
-                        <div class="absolute bottom-4 left-5">
-                            <p class="text-white font-black text-lg leading-tight" style="font-family: Manrope, sans-serif;">Trataplan</p>
-                            <p class="text-xs" style="color: rgba(255,255,255,0.6); font-family: Manrope, sans-serif;">{{ address }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Botões rápidos -->
+                    <!-- Botões rápidos (Matriz) -->
                     <div class="flex gap-3">
-                        <a :href="whatsappUrl" target="_blank" rel="noopener"
+                        <button type="button" @click="openWhatsApp()"
                            class="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white transition-all hover:opacity-90"
                            style="background-color: #25D366; font-family: Manrope, sans-serif;">
-                            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                            </svg>
+                            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                             WhatsApp
-                        </a>
+                        </button>
                         <a v-if="telegramLink" :href="telegramLink" target="_blank" rel="noopener"
                            class="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white transition-all hover:opacity-90"
                            style="background-color: #2AABEE; font-family: Manrope, sans-serif;">
-                            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.955l-2.956-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.884.604z"/>
-                            </svg>
+                            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.955l-2.956-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.884.604z"/></svg>
                             Telegram
                         </a>
                     </div>
@@ -285,60 +327,224 @@ function submit() {
         </div>
     </section>
 
-    <!-- ─── VISITE NOSSA SEDE ─────────────────────────────────────────────────── -->
-    <section class="py-20" style="background-color: #011a10;">
+    <!-- ─── VISITE NOSSAS UNIDADES ───────────────────────────────────────────── -->
+    <section class="py-20" style="background-color: #0d3a22;">
         <div class="container mx-auto px-6 max-w-7xl">
-            <div class="grid md:grid-cols-2 gap-12 items-center">
 
-                <!-- Texto -->
-                <div>
-                    <span class="text-xs font-black uppercase tracking-[0.3em] mb-4 block"
-                          style="color: rgba(251,191,36,0.7); font-family: Manrope, sans-serif;">
-                        {{ t('Presença física', 'Physical presence') }}
-                    </span>
-                    <h2 class="text-white font-headline font-extrabold text-4xl md:text-5xl leading-tight mb-4">
-                        {{ t('Visite Nossa Sede.', 'Visit Our HQ.') }}
-                    </h2>
-                    <p class="text-lg mb-8" style="color: rgba(255,255,255,0.5); font-family: Newsreader, serif; font-style: italic;">
-                        {{ address }}
-                    </p>
+            <!-- Cabeçalho -->
+            <div class="mb-8">
+                <span class="text-xs font-black uppercase tracking-[0.3em] mb-4 block"
+                      style="color: rgba(251,191,36,0.7); font-family: Manrope, sans-serif;">
+                    {{ t('Presença física', 'Physical presence') }}
+                </span>
+                <h2 class="text-white font-headline font-extrabold leading-tight"
+                    style="font-size: clamp(2rem, 4vw, 3.25rem);">
+                    {{ t('Visite Nossas Unidades.', 'Visit Our Units.') }}
+                </h2>
+            </div>
 
-                    <!-- Horário -->
-                    <div class="flex items-center gap-4 mb-8 p-5 rounded-2xl" style="background: rgba(255,255,255,0.05);">
-                        <span class="material-symbols-outlined text-amber-400 text-2xl shrink-0">schedule</span>
-                        <div>
-                            <p class="text-xs font-black uppercase tracking-widest mb-1"
-                               style="color: rgba(255,255,255,0.35); font-family: Manrope, sans-serif;">
-                                {{ t('Horário de Atendimento', 'Business Hours') }}
-                            </p>
-                            <p class="font-bold" style="color: #fff; font-family: Manrope, sans-serif;">
-                                {{ t('Seg – Sex, 08:00 – 18:00', 'Mon – Fri, 08:00 AM – 06:00 PM') }}
-                            </p>
+            <!-- Abas de unidades -->
+            <div v-if="units.length > 1" class="flex gap-1 rounded-xl p-1 mb-8 w-fit" style="background-color: rgba(255,255,255,0.07);">
+                <button v-for="(unit, i) in units" :key="i" type="button" @click="activeMapTab = i"
+                    class="py-2.5 px-5 rounded-lg text-sm font-bold transition-all flex items-center gap-2"
+                    style="font-family: Manrope, sans-serif;"
+                    :style="activeMapTab === i ? 'background-color: #fbbf24; color: #012d1d;' : 'color: rgba(255,255,255,0.5);'">
+                    <span class="w-2 h-2 rounded-full inline-block"
+                          :style="activeMapTab === i ? 'background:#012d1d;' : 'background:rgba(255,255,255,0.3);'"></span>
+                    {{ unit.label || (unit.tipo === 'matriz' ? t('Matriz (Sede)','Headquarters') : t('Filial','Branch')) }}
+                </button>
+            </div>
+
+            <!-- Grid: card info | mapa + formulário -->
+            <div class="grid md:grid-cols-[300px_1fr] gap-8 items-start">
+
+                <!-- Card escuro da unidade -->
+                <div class="rounded-2xl overflow-hidden flex flex-col" style="background-color: #011a10; min-height: 420px;">
+                    <!-- Logo + badge -->
+                    <div class="flex flex-col items-center justify-center pt-8 pb-6 px-6">
+                        <img v-if="logoTransparentUrl" :src="logoTransparentUrl" alt="Trataplan"
+                             class="h-16 w-auto object-contain mb-4" />
+                        <template v-else>
+                            <span class="material-symbols-outlined text-amber-400 text-4xl mb-3"
+                                  style="font-variation-settings:'FILL' 1;">forest</span>
+                        </template>
+                        <span class="text-[10px] font-black uppercase tracking-[0.25em] px-3 py-1 rounded-full mb-1"
+                              style="background-color: rgba(251,191,36,0.18); color: #fbbf24; font-family: Manrope, sans-serif;">
+                            {{ activeMapUnit?.tipo === 'matriz' ? t('MATRIZ','HQ') : t('FILIAL','BRANCH') }}
+                        </span>
+                        <p class="text-sm text-white/60 font-semibold mt-1" style="font-family: Manrope, sans-serif;">
+                            {{ activeMapUnit?.label }}
+                        </p>
+                    </div>
+
+                    <!-- Separador -->
+                    <div class="h-px mx-6" style="background: rgba(255,255,255,0.08);"></div>
+
+                    <!-- Dados de contato -->
+                    <div class="flex-1 px-6 py-5 space-y-4">
+                        <div v-if="activeMapUnit?.address" class="flex items-start gap-3">
+                            <span class="material-symbols-outlined text-amber-400/70 text-sm mt-0.5 shrink-0">location_on</span>
+                            <div>
+                                <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color: rgba(255,255,255,0.3); font-family: Manrope, sans-serif;">{{ t('Endereço','Address') }}</p>
+                                <p class="text-xs leading-relaxed text-white/65" style="font-family: Newsreader, serif;">{{ activeMapUnit.address }}</p>
+                            </div>
+                        </div>
+                        <div v-if="activeMapUnit?.whatsapp" class="flex items-start gap-3">
+                            <span class="material-symbols-outlined text-amber-400/70 text-sm mt-0.5 shrink-0">smartphone</span>
+                            <div>
+                                <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color: rgba(255,255,255,0.3); font-family: Manrope, sans-serif;">WhatsApp</p>
+                                <a :href="`https://wa.me/${activeMapUnit.whatsapp}`" target="_blank" rel="noopener"
+                                   class="text-xs text-white/65 hover:text-white transition-colors" style="font-family: Manrope, sans-serif;">
+                                    {{ activeMapUnit.whatsapp }}
+                                </a>
+                            </div>
+                        </div>
+                        <div v-else-if="activeMapUnit?.phone" class="flex items-start gap-3">
+                            <span class="material-symbols-outlined text-amber-400/70 text-sm mt-0.5 shrink-0">call</span>
+                            <div>
+                                <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color: rgba(255,255,255,0.3); font-family: Manrope, sans-serif;">{{ t('Telefone','Phone') }}</p>
+                                <a :href="`tel:${activeMapUnit.phone.replace(/\D/g,'')}`"
+                                   class="text-xs text-white/65 hover:text-white transition-colors" style="font-family: Manrope, sans-serif;">
+                                    {{ activeMapUnit.phone }}
+                                </a>
+                            </div>
+                        </div>
+                        <div v-if="activeMapUnit?.email" class="flex items-start gap-3">
+                            <span class="material-symbols-outlined text-amber-400/70 text-sm mt-0.5 shrink-0">mail</span>
+                            <div>
+                                <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color: rgba(255,255,255,0.3); font-family: Manrope, sans-serif;">Email</p>
+                                <a :href="`mailto:${activeMapUnit.email}`"
+                                   class="text-xs text-white/65 hover:text-white transition-colors" style="font-family: Manrope, sans-serif;">
+                                    {{ activeMapUnit.email }}
+                                </a>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Botão Maps -->
-                    <a
-                        :href="'https://www.google.com/maps/search/' + encodeURIComponent(address)"
-                        target="_blank" rel="noopener noreferrer"
-                        class="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-sm transition-all hover:opacity-90 active:scale-95"
-                        style="background-color: #fbbf24; color: #012d1d; font-family: Manrope, sans-serif;"
-                    >
-                        <span class="material-symbols-outlined text-base">open_in_new</span>
-                        {{ t('Como Chegar', 'Get Directions') }}
-                    </a>
+                    <!-- Botão WhatsApp -->
+                    <div class="px-6 pb-6">
+                        <button type="button" @click="openWhatsApp()"
+                            class="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm text-white transition-all hover:opacity-90"
+                            style="background-color: #25D366; font-family: Manrope, sans-serif;">
+                            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                            </svg>
+                            {{ t('Falar pelo WhatsApp', 'Chat on WhatsApp') }}
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Mapa -->
-                <div class="rounded-2xl overflow-hidden shadow-2xl" style="height: 320px;">
-                    <iframe
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3604!2d-53.08!3d-27.08!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDA0JzQ4LjAiUyA1M8KwMDQnNDguMCJX!5e0!3m2!1spt-BR!2sbr!4v1600000000000"
-                        class="w-full h-full"
-                        style="border:0;"
-                        allowfullscreen=""
-                        loading="lazy"
-                        title="Trataplan"
-                    ></iframe>
+                <!-- Coluna direita: mapa + formulário -->
+                <div class="space-y-4">
+
+                    <!-- Mapa -->
+                    <div class="rounded-2xl overflow-hidden shadow-2xl relative" style="height: 340px;">
+                        <iframe v-if="mapsEmbedUrl(activeMapUnit)"
+                            :key="activeMapUnit?.maps_link"
+                            :src="mapsEmbedUrl(activeMapUnit)"
+                            class="w-full h-full"
+                            style="border:0;"
+                            allowfullscreen=""
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"
+                            :title="activeMapUnit?.label || 'Trataplan'">
+                        </iframe>
+                        <div v-else class="w-full h-full flex flex-col items-center justify-center gap-3"
+                             style="background: rgba(255,255,255,0.04);">
+                            <span class="material-symbols-outlined text-4xl" style="color: rgba(255,255,255,0.2);">map</span>
+                            <p class="text-[10px] font-bold uppercase tracking-widest" style="color: rgba(255,255,255,0.25); font-family: Manrope, sans-serif;">
+                                {{ t('Configure o link do mapa nas configurações', 'Configure the map link in settings') }}
+                            </p>
+                        </div>
+                        <!-- Botão "Abrir no Maps" -->
+                        <a v-if="activeMapUnit?.address"
+                           :href="mapsDirectionsUrl(activeMapUnit.address)"
+                           target="_blank" rel="noopener noreferrer"
+                           class="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:opacity-90"
+                           style="background: white; color: #012d1d; font-family: Manrope, sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                            <span class="material-symbols-outlined text-sm leading-none">open_in_new</span>
+                            {{ t('Abrir no Maps', 'Open in Maps') }}
+                        </a>
+                    </div>
+
+                    <!-- Formulário de Orçamento -->
+                    <div class="rounded-2xl p-7" style="background-color: #fcf9f4;">
+                        <h3 class="font-headline font-extrabold text-xl mb-5" style="color: #012d1d;">
+                            {{ t('Solicite um Orçamento', 'Request a Quote') }}
+                        </h3>
+
+                        <!-- Sucesso -->
+                        <div v-if="budgetSuccess"
+                             class="mb-5 flex items-center gap-3 rounded-xl p-4"
+                             style="background-color: #c1ecd4;">
+                            <span class="material-symbols-outlined text-xl shrink-0"
+                                  style="color: #012d1d; font-variation-settings:'FILL' 1;">check_circle</span>
+                            <p class="text-sm font-bold" style="color: #012d1d; font-family: Manrope, sans-serif;">
+                                {{ t('Orçamento solicitado com sucesso!', 'Quote requested successfully!') }}
+                            </p>
+                        </div>
+
+                        <form v-else @submit.prevent="submitBudget" class="space-y-4">
+
+                            <!-- Unidade de Atendimento -->
+                            <div v-if="units.length > 1">
+                                <label class="block text-xs font-black uppercase tracking-widest mb-2"
+                                       style="font-family: Manrope, sans-serif; color: #9a8b7a;">
+                                    {{ t('Unidade de Atendimento', 'Service Unit') }}
+                                </label>
+                                <div class="relative">
+                                    <select v-model="budgetForm.unit_email"
+                                        class="w-full px-4 py-3.5 rounded-xl outline-none appearance-none transition-all focus:ring-2 cursor-pointer"
+                                        :style="fieldStyle(budgetForm.errors.unit_email)"
+                                        style="font-family: Manrope, sans-serif; font-size: 0.9rem; color: #1c1c19;">
+                                        <option v-for="(unit, i) in units" :key="i" :value="unit.email || ''">
+                                            {{ unit.label || (unit.tipo === 'matriz' ? t('Matriz (Sede)', 'Headquarters') : t('Filial', 'Branch')) }}
+                                            {{ unit.address ? ' — ' + unit.address.split(',')[0] : '' }}
+                                        </option>
+                                    </select>
+                                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-xl"
+                                          style="color: #9a8b7a;">expand_more</span>
+                                </div>
+                            </div>
+
+                            <!-- Nome + Email -->
+                            <div class="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <input v-model="budgetForm.name" type="text"
+                                        class="w-full px-4 py-3.5 rounded-xl outline-none transition-all focus:ring-2"
+                                        :style="fieldStyle(budgetForm.errors.name)"
+                                        :placeholder="t('Seu Nome', 'Your Name')" />
+                                    <p v-if="budgetForm.errors.name" class="mt-1 text-xs font-semibold" style="color:#ba1a1a;">{{ budgetForm.errors.name }}</p>
+                                </div>
+                                <div>
+                                    <input v-model="budgetForm.email" type="email"
+                                        class="w-full px-4 py-3.5 rounded-xl outline-none transition-all focus:ring-2"
+                                        :style="fieldStyle(budgetForm.errors.email)"
+                                        placeholder="E-mail" />
+                                    <p v-if="budgetForm.errors.email" class="mt-1 text-xs font-semibold" style="color:#ba1a1a;">{{ budgetForm.errors.email }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Mensagem -->
+                            <div>
+                                <textarea v-model="budgetForm.message" rows="4"
+                                    class="w-full px-4 py-3.5 rounded-xl outline-none resize-none transition-all focus:ring-2"
+                                    :style="fieldStyle(budgetForm.errors.message)"
+                                    :placeholder="t('Fale sobre seu projeto...', 'Tell us about your project...')">
+                                </textarea>
+                                <p v-if="budgetForm.errors.message" class="mt-1 text-xs font-semibold" style="color:#ba1a1a;">{{ budgetForm.errors.message }}</p>
+                            </div>
+
+                            <!-- Submit -->
+                            <button type="submit" :disabled="budgetForm.processing"
+                                class="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-black text-sm uppercase tracking-widest text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
+                                style="background-color: #012d1d; font-family: Manrope, sans-serif; letter-spacing: 0.1em;">
+                                <span v-if="budgetForm.processing" class="material-symbols-outlined text-base animate-spin">autorenew</span>
+                                {{ budgetForm.processing ? t('Enviando...', 'Sending...') : t('Enviar Mensagem', 'Send Message') }}
+                            </button>
+                        </form>
+                    </div>
+
                 </div>
             </div>
         </div>

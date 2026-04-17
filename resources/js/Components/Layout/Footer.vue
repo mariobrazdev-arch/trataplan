@@ -1,29 +1,27 @@
 <script setup>
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 import { useLocale } from '@/composables/useLocale';
 import { useSettings } from '@/composables/useSettings';
+import { useWhatsAppPicker } from '@/composables/useWhatsAppPicker';
 
 const { locale, t } = useLocale();
-const { setting, whatsappUrl, logoTransparentUrl } = useSettings();
+const { setting, logoTransparentUrl } = useSettings();
+const { open } = useWhatsAppPicker();
+const page = usePage();
 
 const prefix = computed(() => locale.value === 'en' ? '/en' : '');
 
 const navLinks = computed(() => [
     { label: t('Início', 'Home'),        href: prefix.value + '/' },
     { label: t('Sobre', 'About'),        href: prefix.value + (locale.value === 'en' ? '/about'    : '/sobre') },
-    { label: t('Produtos', 'Products'),  href: prefix.value + (locale.value === 'en' ? '/products' : '/produtos') },
-    { label: t('Parceiros', 'Partners'), href: prefix.value + (locale.value === 'en' ? '/partners' : '/parceiros') },
+    { label: t('Catálogo', 'Catalog'),   href: prefix.value + (locale.value === 'en' ? '/catalog'  : '/catalogo') },
     { label: 'Blog',                     href: prefix.value + '/blog' },
     { label: t('Contato', 'Contact'),    href: prefix.value + (locale.value === 'en' ? '/contact'  : '/contato') },
 ]);
 
-const productLinks = computed(() => [
-    { label: t('Decks & Pergolados', 'Decks & Pergolas'),  href: prefix.value + (locale.value === 'en' ? '/products' : '/produtos') },
-    { label: t('Construção Civil', 'Civil Construction'),   href: prefix.value + (locale.value === 'en' ? '/products' : '/produtos') },
-    { label: t('Cercas e Currais', 'Fences & Pens'),       href: prefix.value + (locale.value === 'en' ? '/products' : '/produtos') },
-    { label: t('Paisagismo', 'Landscaping'),               href: prefix.value + (locale.value === 'en' ? '/products' : '/produtos') },
-]);
+const catalogLinks = computed(() => page.props.catalog_footer ?? []);
 
 const currentYear = new Date().getFullYear();
 
@@ -52,7 +50,7 @@ const linkedin  = computed(() => setting('linkedin_url',    ''));
     >
         <!-- Main grid -->
         <div class="max-w-7xl mx-auto px-6 pt-16 pb-10">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 pb-12 border-b"
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_2fr] gap-10 lg:gap-12 pb-12 border-b"
                  style="border-color: rgba(255,255,255,0.08);">
 
                 <!-- Col 1: Brand -->
@@ -116,8 +114,9 @@ const linkedin  = computed(() => setting('linkedin_url',    ''));
                                 <circle cx="4" cy="4" r="2"/>
                             </svg>
                         </a>
-                        <a :href="whatsappUrl"
-                           target="_blank" rel="noopener noreferrer"
+                        <button
+                           type="button"
+                           @click="open()"
                            class="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-110 hover:bg-white/15"
                            style="background: rgba(255,255,255,0.08);"
                            aria-label="WhatsApp">
@@ -125,7 +124,7 @@ const linkedin  = computed(() => setting('linkedin_url',    ''));
                                  style="color: rgba(255,255,255,0.75);">
                                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                             </svg>
-                        </a>
+                        </button>
                     </div>
                 </div>
 
@@ -148,14 +147,23 @@ const linkedin  = computed(() => setting('linkedin_url',    ''));
                     </ul>
                 </div>
 
-                <!-- Col 3: Produtos -->
+                <!-- Col 3: Catálogo -->
                 <div>
                     <span class="block text-xs font-bold uppercase tracking-widest mb-5"
                           style="color: rgba(255,255,255,0.4); font-family: Manrope, sans-serif;">
-                        {{ t('Produtos', 'Products') }}
+                        {{ t('Catálogo', 'Catalog') }}
                     </span>
                     <ul class="space-y-3">
-                        <li v-for="link in productLinks" :key="link.label">
+                        <li>
+                            <Link
+                                :href="prefix + (locale === 'en' ? '/catalog' : '/catalogo')"
+                                class="text-xs font-bold text-amber-400/70 hover:text-amber-400 transition-colors duration-150 uppercase tracking-wider"
+                                style="font-family: Manrope, sans-serif;"
+                            >
+                                {{ t('Ver todos', 'View all') }}
+                            </Link>
+                        </li>
+                        <li v-for="link in catalogLinks" :key="link.href">
                             <Link
                                 :href="link.href"
                                 class="text-sm text-white/60 hover:text-white transition-colors duration-150"
@@ -169,57 +177,69 @@ const linkedin  = computed(() => setting('linkedin_url',    ''));
 
                 <!-- Col 4: Contato -->
                 <div>
-                    <span class="block text-xs font-bold uppercase tracking-widest mb-5"
+                    <span class="block text-xs font-bold uppercase tracking-widest mb-4"
                           style="color: rgba(255,255,255,0.4); font-family: Manrope, sans-serif;">
                         {{ t('Contato', 'Contact') }}
                     </span>
-                    <address class="not-italic space-y-4" itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
-                        <div v-for="(unit, i) in companyUnits" :key="i" class="flex items-start gap-3">
-                            <span class="material-symbols-outlined text-amber-400/80 text-base mt-0.5 shrink-0">location_on</span>
-                            <div>
-                                <p v-if="unit.label"
-                                   class="text-[10px] font-bold uppercase tracking-widest mb-0.5"
-                                   style="color: rgba(255,255,255,0.35); font-family: Manrope, sans-serif;">
-                                    {{ unit.label }}
-                                </p>
-                                <span class="text-sm leading-snug text-white/65"
-                                      style="font-family: Newsreader, serif;"
-                                      :itemprop="i === 0 ? 'streetAddress' : undefined">
-                                    {{ unit.address }}
-                                </span>
+                    <address class="not-italic" itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
+                        <!-- Unidades lado a lado -->
+                        <div :class="['mb-3', companyUnits.length > 1 ? 'grid grid-cols-2 gap-x-6 gap-y-4' : '']">
+                            <div v-for="(unit, i) in companyUnits" :key="i" class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-amber-400/80 text-sm mt-0.5 shrink-0">location_on</span>
+                                <div class="min-w-0">
+                                    <p v-if="unit.label"
+                                       class="text-[10px] font-bold uppercase tracking-widest mb-1"
+                                       style="color: rgba(255,255,255,0.4); font-family: Manrope, sans-serif;">
+                                        {{ unit.label }}
+                                    </p>
+                                    <span class="text-xs leading-relaxed text-white/65 block"
+                                          style="font-family: Newsreader, serif;"
+                                          :itemprop="i === 0 ? 'streetAddress' : undefined">
+                                        {{ unit.address }}
+                                    </span>
+                                    <div v-if="unit.phone" class="flex items-center gap-1 mt-1.5">
+                                        <span class="material-symbols-outlined text-amber-400/70 shrink-0" style="font-size:11px;">call</span>
+                                        <a :href="`tel:${unit.phone.replace(/\D/g,'')}`"
+                                           class="text-xs text-white/55 hover:text-white transition-colors duration-150"
+                                           style="font-family: Manrope, sans-serif;" itemprop="telephone">
+                                            {{ unit.phone }}
+                                        </a>
+                                    </div>
+                                    <div v-if="unit.email" class="flex items-center gap-1 mt-1">
+                                        <span class="material-symbols-outlined text-amber-400/70 shrink-0" style="font-size:11px;">mail</span>
+                                        <a :href="`mailto:${unit.email}`"
+                                           class="text-xs text-white/55 hover:text-white transition-colors duration-150"
+                                           style="font-family: Manrope, sans-serif;" itemprop="email">
+                                            {{ unit.email }}
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined text-amber-400/80 text-base shrink-0">call</span>
-                            <a :href="`tel:+${phoneRaw}`"
-                               class="text-sm text-white/65 hover:text-white transition-colors duration-150"
-                               style="font-family: Manrope, sans-serif;"
-                               itemprop="telephone">
-                                {{ phone }}
-                            </a>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined text-amber-400/80 text-base shrink-0">mail</span>
-                            <a :href="`mailto:${email}`"
-                               class="text-sm text-white/65 hover:text-white transition-colors duration-150"
-                               style="font-family: Manrope, sans-serif;"
-                               itemprop="email">
-                                {{ email }}
-                            </a>
+
+                        <!-- Telefone + Email globais (quando não há por unidade) -->
+                        <div v-if="!companyUnits.some(u => u.phone) || !companyUnits.some(u => u.email)"
+                             class="flex flex-wrap gap-x-4 gap-y-1.5 mb-3">
+                            <div v-if="!companyUnits.some(u => u.phone) && phone" class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-amber-400/80 text-sm shrink-0">call</span>
+                                <a :href="`tel:+${phoneRaw}`"
+                                   class="text-xs text-white/65 hover:text-white transition-colors duration-150"
+                                   style="font-family: Manrope, sans-serif;" itemprop="telephone">
+                                    {{ phone }}
+                                </a>
+                            </div>
+                            <div v-if="!companyUnits.some(u => u.email) && email" class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-amber-400/80 text-sm shrink-0">mail</span>
+                                <a :href="`mailto:${email}`"
+                                   class="text-xs text-white/65 hover:text-white transition-colors duration-150"
+                                   style="font-family: Manrope, sans-serif;" itemprop="email">
+                                    {{ email }}
+                                </a>
+                            </div>
                         </div>
                     </address>
 
-                    <a
-                        :href="whatsappUrl"
-                        target="_blank" rel="noopener noreferrer"
-                        class="mt-6 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 hover:opacity-90 active:scale-95"
-                        style="background-color: #25D366; color: #fff; font-family: Manrope, sans-serif;"
-                    >
-                        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                        </svg>
-                        {{ t('Fale pelo WhatsApp', 'Chat on WhatsApp') }}
-                    </a>
+
                 </div>
             </div>
 

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, watch, onMounted, onUnmounted } from 'vue';
 import AdminLayout from '@/Components/Layout/AdminLayout.vue';
 import { useForm, Link } from '@inertiajs/vue3';
 
@@ -102,13 +102,86 @@ function onHistoryPhoto(e) {
 }
 
 function submit() {
+    clearTimeout(draftTimer);
     // Merge repeaters into form data before sending
     form.transform(data => ({
         ...data,
         history_items: historyItems.value,
         quality_items: qualityItems.value,
-    })).post('/admin/sobre', { forceFormData: true });
+    })).post('/admin/sobre', {
+        forceFormData: true,
+        onSuccess: () => localStorage.removeItem(DRAFT_KEY),
+    });
 }
+
+// ── Rascunho automático (localStorage) ───────────────────────────────────
+const DRAFT_KEY = 'about_form_draft';
+const draftStatus = ref('idle'); // 'idle' | 'saving' | 'saved' | 'restored'
+let draftTimer = null;
+
+const DRAFT_TEXT_FIELDS = [
+    'version_label',
+    'hero_title_pt', 'hero_title_en', 'hero_subtitle_pt', 'hero_subtitle_en',
+    'keep_hero_photo', 'hero_badge_value', 'hero_badge_label_pt', 'hero_badge_label_en',
+    'history_title_pt', 'history_title_en', 'history_content_pt', 'history_content_en',
+    'keep_history_photo',
+    'quality_title_pt', 'quality_title_en', 'quality_subtitle_pt', 'quality_subtitle_en',
+    'cta_section_name', 'cta_title_pt', 'cta_title_en', 'cta_subtitle_pt', 'cta_subtitle_en',
+    'activate_now',
+];
+
+function saveDraft() {
+    try {
+        const data = {};
+        DRAFT_TEXT_FIELDS.forEach(k => { data[k] = form[k]; });
+        data.history_items = historyItems.value;
+        data.quality_items = qualityItems.value;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+        draftStatus.value = 'saved';
+        setTimeout(() => { draftStatus.value = 'idle'; }, 2500);
+    } catch {}
+}
+
+function scheduleDraft() {
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(saveDraft, 1500);
+}
+
+onMounted(() => {
+    if (props.prefill) return; // Não restaura se vier de prefill do servidor
+    try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!raw) return;
+        const draft = JSON.parse(raw);
+        DRAFT_TEXT_FIELDS.forEach(k => {
+            if (draft[k] !== undefined) form[k] = draft[k];
+        });
+        if (draft.history_items?.length) historyItems.value = draft.history_items;
+        if (draft.quality_items?.length) qualityItems.value = draft.quality_items;
+        draftStatus.value = 'restored';
+        setTimeout(() => { draftStatus.value = 'idle'; }, 3000);
+    } catch {}
+});
+
+watch(
+    [
+        () => form.version_label,
+        () => form.hero_title_pt, () => form.hero_title_en,
+        () => form.hero_subtitle_pt, () => form.hero_subtitle_en,
+        () => form.hero_badge_value, () => form.hero_badge_label_pt, () => form.hero_badge_label_en,
+        () => form.history_title_pt, () => form.history_title_en,
+        () => form.history_content_pt, () => form.history_content_en,
+        () => form.quality_title_pt, () => form.quality_title_en,
+        () => form.quality_subtitle_pt, () => form.quality_subtitle_en,
+        () => form.cta_section_name,
+        () => form.cta_title_pt, () => form.cta_title_en,
+        () => form.cta_subtitle_pt, () => form.cta_subtitle_en,
+    ],
+    () => scheduleDraft()
+);
+watch([historyItems, qualityItems], () => scheduleDraft(), { deep: true });
+
+onUnmounted(() => clearTimeout(draftTimer));
 </script>
 
 <template>
@@ -489,6 +562,20 @@ function submit() {
                 </Link>
 
                 <div class="flex items-center gap-4">
+                    <transition name="draft-fade">
+                        <span v-if="draftStatus === 'saving'" class="flex items-center gap-1.5 text-xs font-label" style="color: #717973;">
+                            <span class="material-symbols-outlined text-sm animate-spin">autorenew</span>
+                            Salvando rascunho...
+                        </span>
+                        <span v-else-if="draftStatus === 'saved'" class="flex items-center gap-1.5 text-xs font-label" style="color: #6b7280;">
+                            <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">edit_note</span>
+                            Rascunho salvo
+                        </span>
+                        <span v-else-if="draftStatus === 'restored'" class="flex items-center gap-1.5 text-xs font-label" style="color: #d97706;">
+                            <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">restore_page</span>
+                            Rascunho restaurado
+                        </span>
+                    </transition>
                     <span v-if="form.activate_now"
                           class="text-xs font-bold px-3 py-1.5 rounded-full"
                           style="background-color: #dcfce7; color: #16a34a;">
@@ -542,5 +629,13 @@ function submit() {
     color: #ef4444;
     font-size: 0.75rem;
     margin-top: 0.25rem;
+}
+.draft-fade-enter-active,
+.draft-fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+.draft-fade-enter-from,
+.draft-fade-leave-to {
+    opacity: 0;
 }
 </style>

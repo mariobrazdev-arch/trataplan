@@ -2,7 +2,7 @@
 import SeoHead from '@/Components/Shared/SeoHead.vue';
 import { Link } from '@inertiajs/vue3';
 import { useLocale } from '@/composables/useLocale';
-import { useSettings } from '@/composables/useSettings';
+import { useWhatsAppPicker } from '@/composables/useWhatsAppPicker';
 import { computed, ref } from 'vue';
 
 const props = defineProps({
@@ -11,7 +11,7 @@ const props = defineProps({
 });
 
 const { locale, t } = useLocale();
-const { whatsappUrl } = useSettings();
+const { open: openWhatsApp } = useWhatsAppPicker();
 
 // ── Galeria ──────────────────────────────────────────────────────
 const allPhotos = computed(() => {
@@ -36,13 +36,10 @@ const mainImgSrc = computed(() => mainPhoto.value || fallbacks[0]);
 const thumbs = computed(() => allPhotos.value.slice(0, 6));
 
 // ── WhatsApp CTA ──────────────────────────────────────────────────
-const waText = computed(() =>
-    encodeURIComponent(t(
-        `Olá! Tenho interesse em saber mais sobre "${props.item?.name}". Podem me ajudar?`,
-        `Hello! I'm interested in learning more about "${props.item?.name}". Can you help me?`
-    ))
-);
-const waLink = computed(() => `${whatsappUrl.value}&text=${waText.value}`);
+const waRawText = computed(() => t(
+    `Olá! Tenho interesse em saber mais sobre "${props.item?.name}". Podem me ajudar?`,
+    `Hello! I'm interested in learning more about "${props.item?.name}". Can you help me?`
+));
 
 // ── Tipo badge ────────────────────────────────────────────────────
 const isService = computed(() => props.item?.type === 'service');
@@ -166,7 +163,7 @@ const paragraphs = computed(() => {
                     </div>
 
                     <!-- Botão WhatsApp -->
-                    <a :href="waLink" target="_blank" rel="noopener noreferrer"
+                    <button type="button" @click="openWhatsApp(waRawText.value)"
                         class="flex items-center justify-center gap-3 px-5 py-5 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all hover:shadow-xl hover:-translate-y-0.5 active:scale-95"
                         style="background-color: #25d366; color: #fff; font-family: Manrope, sans-serif;">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
@@ -174,7 +171,7 @@ const paragraphs = computed(() => {
                             <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.522 5.845L.057 23.617a.5.5 0 0 0 .614.634l5.563-1.459A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.874 9.874 0 0 1-5.027-1.373l-.361-.214-3.729.978.996-3.638-.235-.374A9.862 9.862 0 0 1 2.1 12C2.1 6.523 6.523 2.1 12 2.1S21.9 6.523 21.9 12 17.477 21.9 12 21.9z"/>
                         </svg>
                         {{ t('Orçamento via WhatsApp', 'Get a Quote') }}
-                    </a>
+                    </button>
                 </div>
             </div>
 
@@ -293,7 +290,7 @@ const paragraphs = computed(() => {
                     </div>
 
                     <!-- Botão WhatsApp (repetido na lateral) -->
-                    <a :href="waLink" target="_blank" rel="noopener noreferrer"
+                    <button type="button" @click="openWhatsApp(waRawText.value)"
                         class="flex items-center justify-center gap-3 px-5 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all hover:shadow-xl hover:-translate-y-0.5 active:scale-95 w-full"
                         style="background-color: #25d366; color: #fff; font-family: Manrope, sans-serif;">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -301,7 +298,7 @@ const paragraphs = computed(() => {
                             <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.522 5.845L.057 23.617a.5.5 0 0 0 .614.634l5.563-1.459A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.874 9.874 0 0 1-5.027-1.373l-.361-.214-3.729.978.996-3.638-.235-.374A9.862 9.862 0 0 1 2.1 12C2.1 6.523 6.523 2.1 12 2.1S21.9 6.523 21.9 12 17.477 21.9 12 21.9z"/>
                         </svg>
                         {{ t('Solicitar Orçamento', 'Request a Quote') }}
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -330,7 +327,7 @@ const paragraphs = computed(() => {
                     ) }}
                 </p>
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <a :href="waLink" target="_blank" rel="noopener noreferrer"
+                    <button type="button" @click="openWhatsApp(waRawText.value)"
                         class="flex items-center gap-2.5 px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest transition-all hover:shadow-2xl hover:-translate-y-0.5 active:scale-95"
                         style="font-family: Manrope, sans-serif; background-color: #25d366; color: #fff;">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -338,7 +335,7 @@ const paragraphs = computed(() => {
                             <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.522 5.845L.057 23.617a.5.5 0 0 0 .614.634l5.563-1.459A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.874 9.874 0 0 1-5.027-1.373l-.361-.214-3.729.978.996-3.638-.235-.374A9.862 9.862 0 0 1 2.1 12C2.1 6.523 6.523 2.1 12 2.1S21.9 6.523 21.9 12 17.477 21.9 12 21.9z"/>
                         </svg>
                         {{ t('Orçamento via WhatsApp', 'Get a Quote on WhatsApp') }}
-                    </a>
+                    </button>
                     <Link :href="item.back_url"
                         class="flex items-center gap-2 px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest border-2 transition-all hover:-translate-y-0.5"
                         style="font-family: Manrope, sans-serif; border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.75);">

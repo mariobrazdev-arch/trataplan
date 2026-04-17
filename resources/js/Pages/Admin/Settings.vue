@@ -1,14 +1,14 @@
 <script setup>
 import AdminLayout from '@/Components/Layout/AdminLayout.vue';
 import { useForm } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, watch, onUnmounted } from 'vue';
 
 defineOptions({ layout: null });
 
 const props = defineProps({ settings: Object });
 
 // Dynamic company units
-const defaultUnit = { tipo: 'matriz', label: '', address: '', phone: '', email: '', whatsapp: '', telegram: '' };
+const defaultUnit = { tipo: 'matriz', label: '', address: '', phone: '', email: '', whatsapp: '', telegram: '', maps_link: '' };
 const units = ref(
     Array.isArray(props.settings?.company_units_decoded) && props.settings.company_units_decoded.length
         ? props.settings.company_units_decoded.map(u => ({ ...defaultUnit, ...u }))
@@ -43,6 +43,14 @@ const form = useForm({
     banner_image:       null,
     logo_transparent:   null,
     logo_white_bg:      null,
+    // SMTP
+    mail_from_address:  props.settings?.mail_from_address || '',
+    mail_from_name:     props.settings?.mail_from_name    || '',
+    mail_host:          props.settings?.mail_host         || '',
+    mail_port:          props.settings?.mail_port         || '587',
+    mail_username:      props.settings?.mail_username     || '',
+    mail_password:      props.settings?.mail_password     || '',
+    mail_encryption:    props.settings?.mail_encryption   || 'tls',
 });
 
 const previewTransparent = ref(null);
@@ -79,6 +87,7 @@ const currentBannerImageUrl = computed(() =>
 );
 
 function submit() {
+    clearTimeout(autoSaveTimer);
     form.company_units = JSON.stringify(units.value);
     form.transform(d => {
         const data = { ...d, _method: 'PATCH' };
@@ -88,6 +97,50 @@ function submit() {
         return data;
     }).post('/admin/configuracoes', { forceFormData: true });
 }
+
+// ── Auto-save (campos de texto, sem arquivos) ─────────────────────────────────
+const autoSaveStatus = ref('idle'); // 'idle' | 'saving' | 'saved'
+let autoSaveTimer = null;
+
+function scheduleAutoSave() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => {
+        form.company_units = JSON.stringify(units.value);
+        form.transform(d => {
+            const data = { ...d, _method: 'PATCH' };
+            delete data.logo_transparent;
+            delete data.logo_white_bg;
+            delete data.banner_image;
+            return data;
+        }).post('/admin/configuracoes', {
+            forceFormData: true,
+            preserveScroll: true,
+            onStart:   () => { autoSaveStatus.value = 'saving'; },
+            onSuccess: () => {
+                autoSaveStatus.value = 'saved';
+                setTimeout(() => { autoSaveStatus.value = 'idle'; }, 2500);
+            },
+            onError: () => { autoSaveStatus.value = 'idle'; },
+        });
+    }, 1500);
+}
+
+watch(
+    [
+        () => form.banner_title_pt,    () => form.banner_title_en,
+        () => form.banner_subtitle_pt, () => form.banner_subtitle_en,
+        () => form.company_tagline_pt, () => form.company_tagline_en,
+        () => form.footer_text_pt,     () => form.footer_text_en,
+        () => form.facebook_url,       () => form.instagram_url, () => form.linkedin_url,
+        () => form.mail_from_address,  () => form.mail_from_name,
+        () => form.mail_host,          () => form.mail_port,
+        () => form.mail_username,      () => form.mail_password,  () => form.mail_encryption,
+    ],
+    () => scheduleAutoSave()
+);
+watch(units, () => scheduleAutoSave(), { deep: true });
+
+onUnmounted(() => clearTimeout(autoSaveTimer));
 </script>
 
 <template>
@@ -95,6 +148,16 @@ function submit() {
         <template #title>Configurações</template>
         <template #subtitle>Parâmetros gerais e dados institucionais do site.</template>
         <template #actions>
+            <transition name="autosave-fade">
+                <span v-if="autoSaveStatus === 'saving'" class="flex items-center gap-1.5 text-xs font-label" style="color: #717973;">
+                    <span class="material-symbols-outlined text-sm animate-spin">autorenew</span>
+                    Salvando...
+                </span>
+                <span v-else-if="autoSaveStatus === 'saved'" class="flex items-center gap-1.5 text-xs font-label" style="color: #16a34a;">
+                    <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">check_circle</span>
+                    Salvo automaticamente
+                </span>
+            </transition>
             <button type="submit" form="settings-form" :disabled="form.processing"
                 class="flex items-center gap-2 px-6 py-2.5 rounded-lg font-headline font-bold text-sm text-white shadow-lg transition-all active:scale-95 disabled:opacity-60"
                 style="background-color: #012d1d;">
@@ -314,15 +377,14 @@ function submit() {
                             <!-- WhatsApp (apenas exibe nota para não-matriz) -->
                             <div class="space-y-1">
                                 <p class="font-label text-[9px] uppercase tracking-widest" style="color: #717973;">WhatsApp Business</p>
-                                <div class="flex items-center rounded-md overflow-hidden" :style="unit.tipo !== 'matriz' ? 'background-color: #f6f3ee; opacity: 0.6;' : 'background-color: #f6f3ee;'">
+                                <div class="flex items-center rounded-md overflow-hidden" style="background-color: #f6f3ee;">
                                     <span class="px-2.5 py-2.5 text-xs font-label shrink-0" style="color: #717973; border-right: 1px solid #c1c8c2;">WA</span>
                                     <input v-model="unit.whatsapp" type="text" placeholder="554911999990000"
-                                        :readonly="unit.tipo !== 'matriz'"
                                         class="flex-1 px-2.5 py-2.5 bg-transparent outline-none font-body text-sm"
                                         style="color: #1c1c19; border: none;" />
                                 </div>
                                 <p v-if="unit.tipo !== 'matriz'" class="font-label text-[9px] italic" style="color: #c1c8c2;">
-                                    Somente a Matriz tem WhatsApp no site — informe o da Matriz acima.
+                                    Os botões do site usam o WhatsApp da Matriz, mas você pode registrar o da filial aqui.
                                 </p>
                                 <p v-else class="font-label text-[9px] uppercase tracking-widest" style="color: #c1c8c2;">Apenas números, sem + ou espaços</p>
                             </div>
@@ -338,6 +400,23 @@ function submit() {
                                 </div>
                                 <p v-if="unit.tipo !== 'matriz'" class="font-label text-[9px] italic" style="color: #c1c8c2;">
                                     O Telegram dos botões do site usa o da Matriz.
+                                </p>
+                            </div>
+
+                            <!-- Link do Google Maps (embed) -->
+                            <div class="space-y-1">
+                                <p class="font-label text-[9px] uppercase tracking-widest" style="color: #717973;">Link do Google Maps (embed)</p>
+                                <div class="flex items-center rounded-md overflow-hidden" style="background-color: #f6f3ee;">
+                                    <span class="px-2.5 py-2.5 shrink-0" style="border-right: 1px solid #c1c8c2;">
+                                        <span class="material-symbols-outlined text-sm" style="color: #717973;">map</span>
+                                    </span>
+                                    <input v-model="unit.maps_link" type="url"
+                                        placeholder="https://www.google.com/maps/embed?pb=..."
+                                        class="flex-1 px-2.5 py-2.5 bg-transparent outline-none font-body text-sm"
+                                        style="color: #1c1c19; border: none;" />
+                                </div>
+                                <p class="font-label text-[9px] italic" style="color: #c1c8c2;">
+                                    No Google Maps: Compartilhar → Incorporar um mapa → copie apenas a URL do atributo src do iframe.
                                 </p>
                             </div>
                         </div>
@@ -407,11 +486,99 @@ function submit() {
                 </div>
             </section>
 
+            <!-- ══ 5. CONFIGURAÇÃO DE E-MAIL (SMTP) ══════════════════════ -->
+            <section class="rounded-2xl p-6 space-y-5" style="background-color: #f6f3ee;">
+                <div class="flex items-center gap-3 mb-1">
+                    <span class="material-symbols-outlined" style="color: #6a5e33; font-variation-settings:'FILL' 1;">mail</span>
+                    <p class="font-label text-[10px] uppercase tracking-[0.2em] text-outline">Envio de E-mail (SMTP)</p>
+                </div>
+                <p class="font-body italic text-xs" style="color: #717973;">
+                    Configure aqui o servidor SMTP para envio dos formulários de contato. Deixe em branco para usar as configurações do servidor.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="space-y-1.5">
+                        <p class="font-label text-[10px] uppercase tracking-widest" style="color: #77574d;">Remetente – E-mail (From)</p>
+                        <input v-model="form.mail_from_address" type="email"
+                            placeholder="trataplan@trataplan.com.br"
+                            class="w-full rounded-md p-3 font-body text-sm outline-none"
+                            style="background-color: #ebe8e3; border: none;" />
+                        <p v-if="form.errors.mail_from_address" class="text-xs text-red-500">{{ form.errors.mail_from_address }}</p>
+                    </div>
+                    <div class="space-y-1.5">
+                        <p class="font-label text-[10px] uppercase tracking-widest" style="color: #77574d;">Remetente – Nome</p>
+                        <input v-model="form.mail_from_name" type="text"
+                            placeholder="Trataplan"
+                            class="w-full rounded-md p-3 font-body text-sm outline-none"
+                            style="background-color: #ebe8e3; border: none;" />
+                    </div>
+                    <div class="space-y-1.5">
+                        <p class="font-label text-[10px] uppercase tracking-widest" style="color: #77574d;">Servidor SMTP (Host)</p>
+                        <input v-model="form.mail_host" type="text"
+                            placeholder="mail.trataplan.com.br"
+                            class="w-full rounded-md p-3 font-body text-sm outline-none"
+                            style="background-color: #ebe8e3; border: none;" />
+                        <p v-if="form.errors.mail_host" class="text-xs text-red-500">{{ form.errors.mail_host }}</p>
+                    </div>
+                    <div class="space-y-1.5">
+                        <p class="font-label text-[10px] uppercase tracking-widest" style="color: #77574d;">Porta</p>
+                        <div class="flex gap-2">
+                            <input v-model="form.mail_port" type="number"
+                                placeholder="587"
+                                class="w-28 rounded-md p-3 font-body text-sm outline-none"
+                                style="background-color: #ebe8e3; border: none;" />
+                            <div class="flex gap-1">
+                                <button v-for="enc in ['tls','ssl','none']" :key="enc" type="button"
+                                    @click="form.mail_encryption = enc"
+                                    class="px-3 py-2 rounded-md font-label text-[10px] uppercase tracking-widest font-bold transition-all"
+                                    :style="form.mail_encryption === enc
+                                        ? 'background-color: #012d1d; color: white;'
+                                        : 'background-color: #ebe8e3; color: #717973;'">
+                                    {{ enc.toUpperCase() }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <p class="font-label text-[10px] uppercase tracking-widest" style="color: #77574d;">Usuário SMTP</p>
+                        <input v-model="form.mail_username" type="text"
+                            placeholder="trataplan@trataplan.com.br"
+                            class="w-full rounded-md p-3 font-body text-sm outline-none"
+                            style="background-color: #ebe8e3; border: none;" />
+                    </div>
+                    <div class="space-y-1.5">
+                        <p class="font-label text-[10px] uppercase tracking-widest" style="color: #77574d;">Senha SMTP</p>
+                        <input v-model="form.mail_password" type="password"
+                            placeholder="••••••••"
+                            autocomplete="new-password"
+                            class="w-full rounded-md p-3 font-body text-sm outline-none"
+                            style="background-color: #ebe8e3; border: none;" />
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2 p-3 rounded-lg" style="background-color: rgba(106,94,51,0.1);">
+                    <span class="material-symbols-outlined text-sm shrink-0 mt-0.5" style="color: #6a5e33;">info</span>
+                    <p class="font-body text-xs" style="color: #6a5e33;">
+                        As mensagens do formulário "Fale Conosco" serão enviadas para o <strong>E-mail de Contato</strong> configurado nas Unidades.
+                        Certifique-se de que o usuário SMTP tem permissão para enviar e-mails.
+                    </p>
+                </div>
+            </section>
+
         </form>
     </AdminLayout>
 </template>
 
 <style scoped>
+.autosave-fade-enter-active,
+.autosave-fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+.autosave-fade-enter-from,
+.autosave-fade-leave-to {
+    opacity: 0;
+}
+
 .unit-enter-active,
 .unit-leave-active {
     transition: all 0.25s ease;

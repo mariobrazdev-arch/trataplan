@@ -3,6 +3,7 @@ import SeoHead from '@/Components/Shared/SeoHead.vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import { useLocale } from '@/composables/useLocale';
 import { useSettings } from '@/composables/useSettings';
+import { useWhatsAppPicker } from '@/composables/useWhatsAppPicker';
 import { computed, ref } from 'vue';
 
 const props = defineProps({
@@ -13,7 +14,8 @@ const props = defineProps({
 });
 
 const { locale, t } = useLocale();
-const { settings, setting, whatsappUrl, logoTransparentUrl, companyUnits } = useSettings();
+const { settings, setting, logoTransparentUrl, companyUnits } = useSettings();
+const { open: openWhatsApp } = useWhatsAppPicker();
 
 // Unidades: usa company_units do banco ou monta uma a partir dos campos legados
 const units = computed(() => {
@@ -79,8 +81,25 @@ const contactForm = useForm({
     name: '',
     email: '',
     message: '',
+    subject: 'orcamento',
+    unit_email: '',
 });
+
+const defaultUnitEmail = computed(() => {
+    const u = units.value.find(u => u.email) ?? units.value[0];
+    return u?.email || '';
+});
+
+function fieldStyle(hasError) {
+    return hasError
+        ? 'background-color: #fff0f0; border: 2px solid #ba1a1a;'
+        : 'background-color: #edeae5; border: 2px solid transparent;';
+}
+
 const submitContact = () => {
+    if (!contactForm.unit_email && defaultUnitEmail.value) {
+        contactForm.unit_email = defaultUnitEmail.value;
+    }
     contactForm.post(locale.value === 'en' ? '/en/contact' : '/contato', {
         preserveScroll: true,
         onSuccess: () => contactForm.reset(),
@@ -150,14 +169,13 @@ function prevServices() {
                     {{ bannerSubtitle }}
                 </p>
                 <div class="flex flex-wrap gap-4 items-center">
-                    <a
-                        :href="whatsappUrl"
-                        target="_blank"
-                        rel="noopener"
+                    <button
+                        type="button"
+                        @click="openWhatsApp()"
                         class="bg-tertiary hover:bg-tertiary/90 text-on-tertiary px-8 py-4 rounded-xl font-headline font-bold uppercase tracking-wider transition-transform active:scale-95 shadow-xl shadow-primary/20"
                     >
                         {{ t('Falar no WhatsApp', 'Chat on WhatsApp') }}
-                    </a>
+                    </button>
                     <div class="bg-secondary-container/20 backdrop-blur-md border border-white/10 px-6 py-4 rounded-xl flex items-center gap-3">
                         <span class="material-symbols-outlined text-secondary-container" style="font-variation-settings: 'FILL' 1;">verified</span>
                         <span class="text-emerald-50 font-headline font-bold text-sm uppercase tracking-widest">
@@ -515,14 +533,23 @@ function prevServices() {
                     <!-- Mapa -->
                     <div class="rounded-2xl overflow-hidden shadow-lg flex-1 min-h-[340px]">
                         <iframe
-                            :key="activeIdx"
-                            :src="activeUnit.maps_embed || 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3604!2d-53.08!3d-27.08!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDA0JzQ4LjAiUyA1M8KwMDQnNDguMCJX!5e0!3m2!1spt-BR!2sbr!4v1600000000000'"
+                            v-if="activeUnit.maps_link"
+                            :key="activeUnit.maps_link"
+                            :src="activeUnit.maps_link"
                             class="w-full h-full min-h-[340px]"
                             style="border:0;"
                             allowfullscreen=""
                             loading="lazy"
                             :title="t('Localização Trataplan', 'Trataplan Location')"
                         ></iframe>
+                        <div v-else class="w-full h-full min-h-[340px] flex flex-col items-center justify-center gap-3"
+                             style="background: #f0f4f2;">
+                            <span class="material-symbols-outlined text-4xl" style="color: #c8d8cf;">map</span>
+                            <p class="text-xs font-bold uppercase tracking-widest text-center px-6"
+                               style="color: #a0b8ad; font-family: Manrope, sans-serif;">
+                                {{ t('Configure o link do mapa nas configurações', 'Configure the map link in settings') }}
+                            </p>
+                        </div>
                     </div>
 
                     <!-- Formulário de orçamento -->
@@ -530,38 +557,81 @@ function prevServices() {
                         <h4 class="font-headline font-bold text-lg mb-5 text-primary">
                             {{ t('Solicite um Orçamento', 'Request a Quote') }}
                         </h4>
-                        <form class="space-y-3" @submit.prevent="submitContact">
-                            <div class="grid sm:grid-cols-2 gap-3">
-                                <input
-                                    v-model="contactForm.name"
-                                    class="bg-surface-container-low border-0 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-tertiary focus:outline-none font-body"
-                                    :placeholder="t('Seu Nome', 'Your Name')"
-                                    type="text" required
-                                />
-                                <input
-                                    v-model="contactForm.email"
-                                    class="bg-surface-container-low border-0 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-tertiary focus:outline-none font-body"
-                                    :placeholder="t('E-mail', 'Email')"
-                                    type="email" required
-                                />
+                        <!-- Sucesso -->
+                        <div v-if="contactForm.wasSuccessful"
+                             class="flex items-start gap-3 rounded-xl p-4 mb-4"
+                             style="background-color: #c1ecd4;">
+                            <span class="material-symbols-outlined text-xl shrink-0"
+                                  style="color: #012d1d; font-variation-settings:'FILL' 1;">check_circle</span>
+                            <p class="text-sm font-bold" style="color: #012d1d; font-family: Manrope, sans-serif;">
+                                {{ t('Mensagem enviada com sucesso!', 'Message sent successfully!') }}
+                            </p>
+                        </div>
+
+                        <form v-else class="space-y-3" @submit.prevent="submitContact">
+
+                            <!-- Unidade de Atendimento -->
+                            <div v-if="units.length > 1">
+                                <div class="relative">
+                                    <select v-model="contactForm.unit_email"
+                                        class="w-full px-4 py-3.5 rounded-xl outline-none appearance-none transition-all focus:ring-2 cursor-pointer"
+                                        :style="fieldStyle(contactForm.errors.unit_email)"
+                                        style="font-family: Manrope, sans-serif; font-size: 0.9rem; color: #1c1c19;">
+                                        <option v-for="(unit, i) in units" :key="i" :value="unit.email || ''">
+                                            {{ unit.label || (unit.tipo === 'matriz' ? t('Matriz (Sede)', 'Headquarters') : t('Filial', 'Branch')) }}
+                                            {{ unit.address ? ' — ' + unit.address.split(',')[0] : '' }}
+                                        </option>
+                                    </select>
+                                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-xl"
+                                          style="color: #9a8b7a;">expand_more</span>
+                                </div>
                             </div>
-                            <textarea
-                                v-model="contactForm.message"
-                                class="w-full bg-surface-container-low border-0 rounded-xl p-3.5 text-sm h-24 focus:ring-2 focus:ring-tertiary focus:outline-none font-body resize-none"
-                                :placeholder="t('Fale sobre seu projeto...', 'Tell us about your project...')"
-                                required
-                            ></textarea>
+
+                            <!-- Nome + Email -->
+                            <div class="grid sm:grid-cols-2 gap-3">
+                                <div>
+                                    <input
+                                        v-model="contactForm.name"
+                                        class="w-full px-4 py-3.5 rounded-xl outline-none transition-all focus:ring-2"
+                                        :style="fieldStyle(contactForm.errors.name)"
+                                        :placeholder="t('Seu Nome', 'Your Name')"
+                                        type="text"
+                                    />
+                                    <p v-if="contactForm.errors.name" class="mt-1 text-xs font-semibold" style="color:#ba1a1a; font-family: Manrope, sans-serif;">{{ contactForm.errors.name }}</p>
+                                </div>
+                                <div>
+                                    <input
+                                        v-model="contactForm.email"
+                                        class="w-full px-4 py-3.5 rounded-xl outline-none transition-all focus:ring-2"
+                                        :style="fieldStyle(contactForm.errors.email)"
+                                        :placeholder="t('E-mail', 'Email')"
+                                        type="email"
+                                    />
+                                    <p v-if="contactForm.errors.email" class="mt-1 text-xs font-semibold" style="color:#ba1a1a; font-family: Manrope, sans-serif;">{{ contactForm.errors.email }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Mensagem -->
+                            <div>
+                                <textarea
+                                    v-model="contactForm.message"
+                                    class="w-full px-4 py-3.5 rounded-xl outline-none resize-none transition-all focus:ring-2"
+                                    :style="fieldStyle(contactForm.errors.message)"
+                                    :placeholder="t('Fale sobre seu projeto...', 'Tell us about your project...')"
+                                    rows="4"
+                                ></textarea>
+                                <p v-if="contactForm.errors.message" class="mt-1 text-xs font-semibold" style="color:#ba1a1a; font-family: Manrope, sans-serif;">{{ contactForm.errors.message }}</p>
+                            </div>
+
                             <button
                                 type="submit"
                                 :disabled="contactForm.processing"
                                 class="w-full py-3.5 rounded-xl font-headline font-bold uppercase tracking-widest text-sm text-white hover:opacity-90 transition-opacity disabled:opacity-60"
                                 style="background-color: #012d1d;"
                             >
+                                <span v-if="contactForm.processing" class="material-symbols-outlined text-base animate-spin align-middle mr-1">autorenew</span>
                                 {{ contactForm.processing ? t('Enviando...', 'Sending...') : t('Enviar Mensagem', 'Send Message') }}
                             </button>
-                            <p v-if="contactForm.wasSuccessful" class="text-center font-body text-sm font-bold" style="color: #25D366;">
-                                ✓ {{ t('Mensagem enviada com sucesso!', 'Message sent successfully!') }}
-                            </p>
                         </form>
                     </div>
                 </div>

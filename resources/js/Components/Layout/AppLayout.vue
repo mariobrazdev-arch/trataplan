@@ -2,6 +2,7 @@
 import Navbar from '@/Components/Layout/Navbar.vue';
 import Footer from '@/Components/Layout/Footer.vue';
 import FloatingButtons from '@/Components/Layout/FloatingButtons.vue';
+import WhatsAppPicker from '@/Components/WhatsAppPicker.vue';
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -31,5 +32,6 @@ const flash = computed(() => page.props.flash);
 
         <Footer />
         <FloatingButtons />
+        <WhatsAppPicker />
     </div>
 </template>
