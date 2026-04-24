@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PortfolioService;
 use App\Models\PortfolioServicePhoto;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -147,6 +148,17 @@ class PortfolioServiceAdminController extends Controller
 
         return redirect()->route('admin.portfolio.services.edit', $serviceId)
             ->with('success', 'Foto removida.');
+    }
+
+    public function reorder(Request $request): JsonResponse
+    {
+        $request->validate(['order' => ['required', 'array']]);
+
+        foreach ($request->order as $item) {
+            PortfolioService::where('id', $item['id'])->update(['order' => $item['order']]);
+        }
+
+        return response()->json(['ok' => true]);
     }
 
     public function destroy(PortfolioService $service): RedirectResponse

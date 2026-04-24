@@ -2,6 +2,7 @@
 import AdminLayout from '@/Components/Layout/AdminLayout.vue';
 import { useForm, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import { useConfirm } from '@/composables/useConfirm';
 
 defineOptions({ layout: null });
 defineProps({ categories: Array });
@@ -39,10 +40,12 @@ function submit() {
     }
 }
 
-function destroy(cat) {
-    if (confirm(`Remover a categoria "${cat.name_pt}"? Esta ação não pode ser desfeita.`)) {
-        router.delete(`/admin/post-categorias/${cat.id}`);
-    }
+const { confirm } = useConfirm();
+
+async function destroy(cat) {
+    const ok = await confirm({ title: 'Remover categoria', message: `Remover a categoria "${cat.name_pt}"? Esta ação não pode ser desfeita.` });
+    if (!ok) return;
+    router.delete(`/admin/post-categorias/${cat.id}`);
 }
 </script>
 
@@ -86,7 +89,6 @@ function destroy(cat) {
                 <div class="flex-grow min-w-0">
                     <div class="flex items-center gap-3">
                         <h4 class="text-base font-headline font-extrabold text-primary">{{ cat.name_pt }}</h4>
-                        <span class="text-sm font-body italic" style="color: #6a5e33;">{{ cat.name_en || '—' }}</span>
                     </div>
                     <p v-if="cat.description_pt" class="text-sm font-body italic line-clamp-1 mt-0.5" style="color: #717973;">{{ cat.description_pt }}</p>
                     <p v-else class="text-sm font-body italic mt-0.5" style="color: #c1c8c2;">Sem descrição</p>

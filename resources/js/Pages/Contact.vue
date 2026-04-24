@@ -12,7 +12,8 @@ const { locale, t } = useLocale();
 const { telegramLink, setting, companyUnits, logoTransparentUrl } = useSettings();
 const { open: openWhatsApp } = useWhatsAppPicker();
 const page    = usePage();
-const success = computed(() => page.props.flash?.success);
+const success   = computed(() => page.props.flash?.success);
+const mailError = computed(() => page.props.flash?.mail_error);
 
 // ── Unidades do banco ────────────────────────────────────────────────────────
 const units = computed(() => {
@@ -51,30 +52,40 @@ const projectTypes = computed(() => [
     { value: 'outro',            label: t('Outro / Dúvida geral',       'Other / General question') },
 ]);
 
-const form = useForm({ name: '', email: '', phone: '', subject: '', message: '', unit_email: '' });
+const form = useForm({ name: '', email: '', phone: '', subject: '', message: '', unit_email: '', unit_name: '', website: '' });
 
-// Inicializa unit_email com o email da primeira unidade que tiver email
+// Inicializa unit_email/unit_name com a primeira unidade que tiver email
 const defaultUnitEmail = computed(() => {
     const u = units.value.find(u => u.email) ?? units.value[0];
     return u?.email || '';
 });
+const defaultUnitName = computed(() => {
+    const u = units.value.find(u => u.email) ?? units.value[0];
+    return u?.label || '';
+});
 
-const budgetForm = useForm({ name: '', email: '', message: '', subject: 'orcamento', unit_email: '' });
+const budgetForm = useForm({ name: '', email: '', message: '', subject: 'orcamento', unit_email: '', unit_name: '', website: '' });
 const budgetSuccess = ref(false);
 
-// Sincroniza unit_email do orçamento com a aba do mapa ativa
+// Sincroniza unit_email/unit_name do orçamento com a aba do mapa ativa
 const defaultBudgetUnitEmail = computed(() => {
     const u = units.value[activeMapTab.value] ?? units.value.find(u => u.email) ?? units.value[0];
     return u?.email || '';
 });
+const defaultBudgetUnitName = computed(() => {
+    const u = units.value[activeMapTab.value] ?? units.value.find(u => u.email) ?? units.value[0];
+    return u?.label || '';
+});
 
 watch(activeMapTab, () => {
     budgetForm.unit_email = defaultBudgetUnitEmail.value;
+    budgetForm.unit_name  = defaultBudgetUnitName.value;
 }, { immediate: true });
 
 function submit() {
     if (!form.unit_email && defaultUnitEmail.value) {
         form.unit_email = defaultUnitEmail.value;
+        form.unit_name  = defaultUnitName.value;
     }
     const action = locale.value === 'en' ? '/en/contact' : '/contato';
     form.post(action, { onSuccess: () => form.reset() });
@@ -116,7 +127,7 @@ function fieldStyle(hasError) {
                 </span>
             </div>
 
-            <div class="grid lg:grid-cols-[1fr_380px] gap-16 items-start pb-24">
+            <div class="grid lg:grid-cols-[1fr_380px] gap-10 lg:gap-16 items-start pb-24">
 
                 <!-- ── COLUNA ESQUERDA: formulário ── -->
                 <div>
@@ -147,8 +158,29 @@ function fieldStyle(hasError) {
                         </div>
                     </div>
 
+                    <!-- Erro de envio de email -->
+                    <div v-else-if="mailError"
+                         class="mb-8 flex items-start gap-4 rounded-2xl p-6"
+                         style="background-color: #fff4e0; border: 1.5px solid #fbbf24;">
+                        <span class="material-symbols-outlined text-2xl mt-0.5 shrink-0"
+                              style="color: #b45309; font-variation-settings: 'FILL' 1;">warning</span>
+                        <div>
+                            <p class="font-bold text-base" style="color: #78350f; font-family: Manrope, sans-serif;">
+                                {{ t('Mensagem recebida, mas houve um problema no envio do e-mail.', 'Message received, but there was an issue sending the email.') }}
+                            </p>
+                            <p class="text-sm mt-1" style="color: #92400e; font-family: Newsreader, serif;">
+                                {{ t('Sua mensagem foi salva com sucesso. Nossa equipe irá visualizá-la em breve. Se preferir, entre em contato pelo WhatsApp.', 'Your message was saved successfully. Our team will view it shortly. If you prefer, contact us via WhatsApp.') }}
+                            </p>
+                        </div>
+                    </div>
+
                     <!-- Formulário -->
                     <form v-else @submit.prevent="submit" class="space-y-5">
+
+                        <!-- Honeypot anti-spam (invisível para humanos) -->
+                        <div aria-hidden="true" style="display:none; visibility:hidden; position:absolute; left:-9999px;">
+                            <input v-model="form.website" type="text" name="website" tabindex="-1" autocomplete="off" />
+                        </div>
 
                         <!-- Nome -->
                         <div>
@@ -199,7 +231,8 @@ function fieldStyle(hasError) {
                                 <select v-model="form.unit_email"
                                     class="w-full px-5 py-4 rounded-xl outline-none appearance-none transition-all focus:ring-2 cursor-pointer"
                                     :style="fieldStyle(form.errors.unit_email)"
-                                    style="font-family: Manrope, sans-serif; font-size: 0.95rem; color: #1c1c19;">
+                                    style="font-family: Manrope, sans-serif; font-size: 0.95rem; color: #1c1c19;"
+                                    @change="e => { const u = units.find(u => u.email === e.target.value); form.unit_name = u?.label || ''; }">
                                     <option v-for="(unit, i) in units" :key="i" :value="unit.email || ''">
                                         {{ unit.label || (unit.tipo === 'matriz' ? t('Matriz (Sede)', 'Headquarters') : t('Filial', 'Branch')) }}
                                         {{ unit.address ? ' — ' + unit.address.split(',')[0] : '' }}
@@ -255,7 +288,7 @@ function fieldStyle(hasError) {
                 </div>
 
                 <!-- ── COLUNA DIREITA: unidades do banco ── -->
-                <div class="space-y-6 lg:pt-24">
+                <div class="space-y-6 lg:pt-24 order-first lg:order-last">
 
                     <!-- Abas de unidades -->
                     <div v-if="units.length > 1" class="flex gap-1 rounded-xl p-1" style="background-color: #f0ede8;">
@@ -486,6 +519,11 @@ function fieldStyle(hasError) {
 
                         <form v-else @submit.prevent="submitBudget" class="space-y-4">
 
+                            <!-- Honeypot anti-spam -->
+                            <div aria-hidden="true" style="display:none; visibility:hidden; position:absolute; left:-9999px;">
+                                <input v-model="budgetForm.website" type="text" name="website" tabindex="-1" autocomplete="off" />
+                            </div>
+
                             <!-- Unidade de Atendimento -->
                             <div v-if="units.length > 1">
                                 <label class="block text-xs font-black uppercase tracking-widest mb-2"
@@ -496,7 +534,8 @@ function fieldStyle(hasError) {
                                     <select v-model="budgetForm.unit_email"
                                         class="w-full px-4 py-3.5 rounded-xl outline-none appearance-none transition-all focus:ring-2 cursor-pointer"
                                         :style="fieldStyle(budgetForm.errors.unit_email)"
-                                        style="font-family: Manrope, sans-serif; font-size: 0.9rem; color: #1c1c19;">
+                                        style="font-family: Manrope, sans-serif; font-size: 0.9rem; color: #1c1c19;"
+                                        @change="e => { const u = units.find(u => u.email === e.target.value); budgetForm.unit_name = u?.label || ''; }">
                                         <option v-for="(unit, i) in units" :key="i" :value="unit.email || ''">
                                             {{ unit.label || (unit.tipo === 'matriz' ? t('Matriz (Sede)', 'Headquarters') : t('Filial', 'Branch')) }}
                                             {{ unit.address ? ' — ' + unit.address.split(',')[0] : '' }}

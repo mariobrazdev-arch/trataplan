@@ -21,7 +21,7 @@ const DEFAULTS = {
     hero_title_en:        'Trataplan: The Structure of Sustainable Innovation.',
     hero_subtitle_pt:     'Há mais de uma década transformando madeira em durabilidade, no coração do Oeste Catarinense.',
     hero_subtitle_en:     'For over a decade transforming wood into durability, in the heart of Western Santa Catarina.',
-    hero_photo_url:       'https://images.unsplash.com/photo-1448375240586-882707db888b?w=900&q=80',
+    hero_photo_url:       '/images/defaults/about-hero.jpg',
     hero_badge_value:     '+15',
     hero_badge_label_pt:  'Anos de mercado',
     hero_badge_label_en:  'Years in market',
@@ -29,7 +29,8 @@ const DEFAULTS = {
     history_title_en:     'Deep Roots in Western Santa Catarina',
     history_content_pt:   'A Trataplan nasceu da visão de oferecer madeira tratada de alta qualidade para o mercado do Oeste Catarinense e de toda a região Sul do Brasil. Nossa missão é entregar durabilidade com responsabilidade ambiental.\n\nUtilizamos exclusivamente madeiras de reflorestamento — Pinus e Eucalipto — tratadas pelo processo de autoclave vácuo-pressão, o mais eficaz para garantir resistência a cupins, fungos e intempéries por décadas.',
     history_content_en:   'Trataplan was born from the vision of offering high-quality treated wood to the market of Western Santa Catarina and throughout Southern Brazil. Our mission is to deliver durability with environmental responsibility.\n\nWe use exclusively reforestation wood — Pine and Eucalyptus — treated by the vacuum-pressure autoclave process, the most effective for ensuring resistance to termites, fungi and weathering for decades.',
-    history_photo_url:    'https://images.unsplash.com/photo-1586348943529-beaae6c28db9?w=900&q=80',
+    history_photo_url:    '/images/defaults/about-history.jpg',
+    history_youtube_url:  null,
     history_items: [
         { value: '15+',  label_pt: 'Anos',           label_en: 'Years' },
         { value: '100%', label_pt: 'Reflorestamento', label_en: 'Reforestation' },
@@ -66,6 +67,7 @@ const DEFAULTS = {
     cta_title_en:    'Wood 100% from Reforestation.',
     cta_subtitle_pt: 'Nosso compromisso com o planeta é tão sólido quanto a madeira que produzimos. Cada peça vendida representa uma árvore de floresta plantada.',
     cta_subtitle_en: 'Our commitment to the planet is as solid as the wood we produce. Each piece sold represents a tree from a planted forest.',
+    cta_photo_url:   '/images/defaults/about-hero.jpg',
 };
 
 function merge(key) {
@@ -88,6 +90,7 @@ const data = computed(() => ({
     history_content_pt:   merge('history_content_pt'),
     history_content_en:   merge('history_content_en'),
     history_photo_url:    merge('history_photo_url'),
+    history_youtube_url:  merge('history_youtube_url'),
     history_items:        merge('history_items'),
     quality_title_pt:     merge('quality_title_pt'),
     quality_title_en:     merge('quality_title_en'),
@@ -98,7 +101,35 @@ const data = computed(() => ({
     cta_title_en:         merge('cta_title_en'),
     cta_subtitle_pt:      merge('cta_subtitle_pt'),
     cta_subtitle_en:      merge('cta_subtitle_en'),
+    cta_photo_url:        merge('cta_photo_url'),
 }));
+
+// ── YouTube embed ────────────────────────────────────────────────────────────
+const youtubeVideo = computed(() => {
+    const url = data.value.history_youtube_url;
+    if (!url) return null;
+    let id = null;
+    let isShort = false;
+    try {
+        const u = new URL(url);
+        if (u.hostname === 'youtu.be') {
+            id = u.pathname.slice(1).split('?')[0];
+        } else if (u.pathname.startsWith('/shorts/')) {
+            id = u.pathname.replace('/shorts/', '').split('?')[0];
+            isShort = true;
+        } else {
+            id = u.searchParams.get('v');
+        }
+    } catch {
+        const m = url.match(/(?:v=|youtu\.be\/|shorts\/)([A-Za-z0-9_-]{11})/);
+        if (m) id = m[1];
+    }
+    if (!id) return null;
+    return {
+        embedUrl: `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`,
+        isShort,
+    };
+});
 
 // ── Carousel qualidade ───────────────────────────────────────────────────────
 const qualitySlideStart = ref(0);
@@ -126,7 +157,7 @@ function prevQuality() {
     <SeoHead v-bind="seo" />
 
     <!-- ─── HERO ─────────────────────────────────────────────────────────────── -->
-    <section class="relative min-h-[560px] flex items-center overflow-hidden" style="background-color: #012d1d;">
+    <section class="relative min-h-[480px] md:min-h-[560px] flex items-center overflow-hidden" style="background-color: #012d1d;">
         <div class="absolute inset-0 opacity-5"
              style="background-image: repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%); background-size: 20px 20px;"></div>
 
@@ -136,7 +167,7 @@ function prevQuality() {
                       style="color: #fbbf24; font-family: Manrope, sans-serif;">
                     {{ t('Sobre a Empresa', 'About the Company') }}
                 </span>
-                <h1 class="text-white font-headline font-extrabold text-5xl md:text-6xl leading-[1.05] tracking-tight mb-8">
+                <h1 class="text-white font-headline font-extrabold text-3xl md:text-5xl lg:text-6xl leading-[1.05] tracking-tight mb-8">
                     {{ locale === 'en' ? data.hero_title_en : data.hero_title_pt }}
                 </h1>
                 <p class="text-lg leading-relaxed mb-10" style="color: rgba(255,255,255,0.6); font-family: Newsreader, serif; font-style: italic;">
@@ -153,7 +184,7 @@ function prevQuality() {
             </div>
 
             <div class="relative hidden md:block">
-                <div class="relative rounded-2xl overflow-hidden shadow-2xl" style="height: 420px;">
+                <div class="relative rounded-2xl overflow-hidden shadow-2xl h-64 md:h-[420px]">
                     <img
                         :src="data.hero_photo_url"
                         :alt="t('Floresta de pinus – Trataplan', 'Pine forest – Trataplan')"
@@ -180,15 +211,45 @@ function prevQuality() {
             <div class="grid md:grid-cols-2 gap-16 items-center">
 
                 <div class="relative">
-                    <img
-                        :src="data.history_photo_url"
-                        :alt="t('Madeira tratada – Trataplan', 'Treated wood – Trataplan')"
-                        class="w-full rounded-2xl shadow-xl object-cover"
-                        style="height: 420px;"
-                    />
-                    <div class="absolute bottom-6 right-6 rounded-xl px-5 py-4 shadow-lg"
-                         style="background: rgba(1,45,29,0.92); backdrop-filter: blur(8px);">
-                        <p class="font-black text-xl text-white leading-none" style="font-family: Manrope, sans-serif;">{{ setting('contact_address', 'SC-283, Planalto Alegre - SC') }}</p>
+                    <!-- Vídeo YouTube -->
+                    <div v-if="youtubeVideo" class="flex justify-center">
+                        <!-- Short: container portrait centralizado -->
+                        <div v-if="youtubeVideo.isShort"
+                             class="rounded-2xl shadow-xl overflow-hidden w-full max-w-[280px]"
+                             style="aspect-ratio: 9/16;">
+                            <iframe
+                                :src="youtubeVideo.embedUrl"
+                                class="w-full h-full"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen
+                                :title="t('Vídeo Trataplan', 'Trataplan Video')"
+                            ></iframe>
+                        </div>
+                        <!-- Vídeo normal: container landscape -->
+                        <div v-else
+                             class="w-full rounded-2xl shadow-xl overflow-hidden h-56 md:h-[420px]">
+                            <iframe
+                                :src="youtubeVideo.embedUrl"
+                                class="w-full h-full"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen
+                                :title="t('Vídeo Trataplan', 'Trataplan Video')"
+                            ></iframe>
+                        </div>
+                    </div>
+                    <!-- Foto (padrão quando não há vídeo) -->
+                    <div v-else>
+                        <img
+                            :src="data.history_photo_url"
+                            :alt="t('Madeira tratada – Trataplan', 'Treated wood – Trataplan')"
+                            class="w-full rounded-2xl shadow-xl object-cover h-64 md:h-[420px]"
+                        />
+                        <div class="absolute bottom-6 right-6 rounded-xl px-5 py-4 shadow-lg"
+                             style="background: rgba(1,45,29,0.92); backdrop-filter: blur(8px);">
+                            <p class="font-black text-xl text-white leading-none" style="font-family: Manrope, sans-serif;">{{ setting('contact_address', 'SC-283, Planalto Alegre - SC') }}</p>
+                        </div>
                     </div>
                 </div>
 
@@ -264,7 +325,7 @@ function prevQuality() {
                 </div>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-8">
+            <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
                 <div
                     v-for="(item, i) in visibleQualityItems"
                     :key="item.title_pt + i"
@@ -322,10 +383,10 @@ function prevQuality() {
 
             <div class="hidden md:flex justify-center">
                 <div class="relative">
-                    <div class="w-72 h-72 rounded-full overflow-hidden border-4 shadow-2xl"
+                    <div class="w-52 h-52 md:w-72 md:h-72 rounded-full overflow-hidden border-4 shadow-2xl"
                          style="border-color: rgba(251,191,36,0.4);">
                         <img
-                            src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=80"
+                            :src="data.cta_photo_url"
                             alt="Floresta de reflorestamento"
                             class="w-full h-full object-cover"
                         />

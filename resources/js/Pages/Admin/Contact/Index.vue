@@ -2,6 +2,7 @@
 import AdminLayout from '@/Components/Layout/AdminLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import { useConfirm } from '@/composables/useConfirm';
 
 defineOptions({ layout: null });
 const props = defineProps({ messages: Object });
@@ -14,10 +15,12 @@ const filteredMessages = computed(() => {
     return props.messages.data;
 });
 
-function destroy(id) {
-    if (confirm('Excluir esta mensagem?')) {
-        router.delete(`/admin/mensagens/${id}`);
-    }
+const { confirm } = useConfirm();
+
+async function destroy(id) {
+    const ok = await confirm({ title: 'Excluir mensagem', message: 'Excluir esta mensagem? Esta ação não pode ser desfeita.' });
+    if (!ok) return;
+    router.delete(`/admin/mensagens/${id}`);
 }
 
 function initials(name) {

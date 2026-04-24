@@ -7,6 +7,7 @@ defineOptions({ layout: null });
 
 const props = defineProps({
     prefill: Object,
+    editId:  Number,
 });
 
 // ── Abas ────────────────────────────────────────────────────────────────────
@@ -50,6 +51,7 @@ function removeQualityItem(i) { qualityItems.value.splice(i, 1); }
 // ── Previews de foto ─────────────────────────────────────────────────────────
 const heroPhotoPreview    = ref(props.prefill?.hero_photo_url    || null);
 const historyPhotoPreview = ref(props.prefill?.history_photo_url || null);
+const ctaPhotoPreview     = ref(props.prefill?.cta_photo_url     || null);
 
 // ── Formulário ───────────────────────────────────────────────────────────────
 const form = useForm({
@@ -72,6 +74,7 @@ const form = useForm({
     history_content_en:   props.prefill?.history_content_en   ?? '',
     history_photo:        null,
     keep_history_photo:   props.prefill?.history_photo_path   ?? '',
+    history_youtube_url:  props.prefill?.history_youtube_url  ?? '',
 
     quality_title_pt:     props.prefill?.quality_title_pt     ?? '',
     quality_title_en:     props.prefill?.quality_title_en     ?? '',
@@ -83,6 +86,8 @@ const form = useForm({
     cta_title_en:         props.prefill?.cta_title_en         ?? '',
     cta_subtitle_pt:      props.prefill?.cta_subtitle_pt      ?? '',
     cta_subtitle_en:      props.prefill?.cta_subtitle_en      ?? '',
+    cta_photo:            null,
+    keep_cta_photo:       props.prefill?.cta_photo_path       ?? '',
 });
 
 function onHeroPhoto(e) {
@@ -101,14 +106,25 @@ function onHistoryPhoto(e) {
     historyPhotoPreview.value = URL.createObjectURL(file);
 }
 
+function onCtaPhoto(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    form.cta_photo = file;
+    form.keep_cta_photo = '';
+    ctaPhotoPreview.value = URL.createObjectURL(file);
+}
+
 function submit() {
     clearTimeout(draftTimer);
-    // Merge repeaters into form data before sending
-    form.transform(data => ({
+    const transformed = form.transform(data => ({
         ...data,
         history_items: historyItems.value,
         quality_items: qualityItems.value,
-    })).post('/admin/sobre', {
+        ...(props.editId ? { _method: 'PUT' } : {}),
+    }));
+
+    const url = props.editId ? `/admin/sobre/${props.editId}` : '/admin/sobre';
+    transformed.post(url, {
         forceFormData: true,
         onSuccess: () => localStorage.removeItem(DRAFT_KEY),
     });
@@ -124,7 +140,7 @@ const DRAFT_TEXT_FIELDS = [
     'hero_title_pt', 'hero_title_en', 'hero_subtitle_pt', 'hero_subtitle_en',
     'keep_hero_photo', 'hero_badge_value', 'hero_badge_label_pt', 'hero_badge_label_en',
     'history_title_pt', 'history_title_en', 'history_content_pt', 'history_content_en',
-    'keep_history_photo',
+    'keep_history_photo', 'history_youtube_url',
     'quality_title_pt', 'quality_title_en', 'quality_subtitle_pt', 'quality_subtitle_en',
     'cta_section_name', 'cta_title_pt', 'cta_title_en', 'cta_subtitle_pt', 'cta_subtitle_en',
     'activate_now',
@@ -148,7 +164,7 @@ function scheduleDraft() {
 }
 
 onMounted(() => {
-    if (props.prefill) return; // Não restaura se vier de prefill do servidor
+    if (props.prefill || props.editId) return; // Não restaura se vier de prefill/edição do servidor
     try {
         const raw = localStorage.getItem(DRAFT_KEY);
         if (!raw) return;
@@ -171,6 +187,7 @@ watch(
         () => form.hero_badge_value, () => form.hero_badge_label_pt, () => form.hero_badge_label_en,
         () => form.history_title_pt, () => form.history_title_en,
         () => form.history_content_pt, () => form.history_content_en,
+        () => form.history_youtube_url,
         () => form.quality_title_pt, () => form.quality_title_en,
         () => form.quality_subtitle_pt, () => form.quality_subtitle_en,
         () => form.cta_section_name,
@@ -186,9 +203,9 @@ onUnmounted(() => clearTimeout(draftTimer));
 
 <template>
     <AdminLayout>
-        <template #title>Nova Versão – Página Sobre</template>
+        <template #title>{{ editId ? 'Editar Versão – Página Sobre' : 'Nova Versão – Página Sobre' }}</template>
         <template #subtitle>
-            Preencha os campos abaixo. Ao salvar, uma nova versão será criada no histórico.
+            {{ editId ? 'Edite os campos abaixo. As alterações serão salvas nesta versão existente.' : 'Preencha os campos abaixo. Ao salvar, uma nova versão será criada no histórico.' }}
         </template>
 
         <form @submit.prevent="submit" class="space-y-8">
@@ -288,8 +305,8 @@ onUnmounted(() => clearTimeout(draftTimer));
                                     ×
                                 </button>
                             </div>
-                            <label class="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed cursor-pointer hover:bg-gray-50 transition-colors text-sm"
-                                   style="border-color: #d1d5db; color: #6b7280;">
+                            <label class="flex items-center gap-2 px-5 py-3 rounded-xl cursor-pointer transition-colors text-sm font-bold"
+                                   style="background-color: #012d1d; color: #fff;">
                                 <span class="material-symbols-outlined text-base">upload</span>
                                 {{ heroPhotoPreview ? 'Trocar foto' : 'Selecionar foto' }}
                                 <input type="file" accept="image/*" class="sr-only" @change="onHeroPhoto" />
@@ -353,9 +370,27 @@ onUnmounted(() => clearTimeout(draftTimer));
                         </div>
                     </div>
 
+                    <!-- Vídeo YouTube da seção Histórica -->
+                    <div class="rounded-xl p-4" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">
+                        <p class="text-xs font-black uppercase tracking-widest mb-3" style="color: #166534; font-family: Manrope, sans-serif;">
+                            Vídeo do YouTube (substitui a foto quando preenchido)
+                        </p>
+                        <div>
+                            <label class="field-label">URL do vídeo</label>
+                            <input
+                                v-model="form.history_youtube_url"
+                                type="text"
+                                class="field-input"
+                                placeholder="https://www.youtube.com/watch?v=... ou https://youtu.be/..."
+                            />
+                            <p class="text-xs mt-1" style="color: #6b7280;">Cole o link do YouTube. Se preenchido, o vídeo aparece no lugar da foto. Deixe em branco para usar a foto.</p>
+                            <p v-if="form.errors.history_youtube_url" class="field-error">{{ form.errors.history_youtube_url }}</p>
+                        </div>
+                    </div>
+
                     <!-- Foto história -->
                     <div>
-                        <label class="field-label">Foto da seção Histórica</label>
+                        <label class="field-label">Foto da seção Histórica <span style="color: #9ca3af;">(usada quando não há vídeo)</span></label>
                         <div class="flex items-start gap-4">
                             <div v-if="historyPhotoPreview" class="relative w-32 h-20 rounded-xl overflow-hidden flex-shrink-0">
                                 <img :src="historyPhotoPreview" class="w-full h-full object-cover" alt="Preview" />
@@ -365,8 +400,8 @@ onUnmounted(() => clearTimeout(draftTimer));
                                     ×
                                 </button>
                             </div>
-                            <label class="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed cursor-pointer hover:bg-gray-50 transition-colors text-sm"
-                                   style="border-color: #d1d5db; color: #6b7280;">
+                            <label class="flex items-center gap-2 px-5 py-3 rounded-xl cursor-pointer transition-colors text-sm font-bold"
+                                   style="background-color: #012d1d; color: #fff;">
                                 <span class="material-symbols-outlined text-base">upload</span>
                                 {{ historyPhotoPreview ? 'Trocar foto' : 'Selecionar foto' }}
                                 <input type="file" accept="image/*" class="sr-only" @change="onHistoryPhoto" />
@@ -548,6 +583,33 @@ onUnmounted(() => clearTimeout(draftTimer));
                                       placeholder="Our commitment to the planet..."></textarea>
                         </div>
                     </div>
+
+                    <!-- Foto circular da CTA -->
+                    <div class="rounded-xl p-4" style="background-color: #f0f9ff; border: 1px solid #bae6fd;">
+                        <p class="text-xs font-black uppercase tracking-widest mb-3" style="color: #0369a1; font-family: Manrope, sans-serif;">
+                            Foto circular (decorativa no lado direito da seção)
+                        </p>
+                        <div class="flex items-start gap-4">
+                            <div v-if="ctaPhotoPreview" class="relative flex-shrink-0">
+                                <div class="w-24 h-24 rounded-full overflow-hidden border-4" style="border-color: rgba(251,191,36,0.4);">
+                                    <img :src="ctaPhotoPreview" class="w-full h-full object-cover" alt="Preview CTA" />
+                                </div>
+                                <button type="button"
+                                        @click="ctaPhotoPreview = null; form.cta_photo = null; form.keep_cta_photo = '';"
+                                        class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs">
+                                    ×
+                                </button>
+                            </div>
+                            <label class="flex items-center gap-2 px-5 py-3 rounded-xl cursor-pointer transition-colors text-sm font-bold"
+                                   style="background-color: #0369a1; color: #fff;">
+                                <span class="material-symbols-outlined text-base">upload</span>
+                                {{ ctaPhotoPreview ? 'Trocar foto' : 'Selecionar foto circular' }}
+                                <input type="file" accept="image/*" class="sr-only" @change="onCtaPhoto" />
+                            </label>
+                        </div>
+                        <p class="text-xs mt-2" style="color: #6b7280;">Deixe em branco para usar a imagem padrão. Recomendado: quadrada ou retrato 600×600px, máx 3MB.</p>
+                        <p v-if="form.errors.cta_photo" class="field-error">{{ form.errors.cta_photo }}</p>
+                    </div>
                 </div>
             </div>
 
@@ -590,7 +652,7 @@ onUnmounted(() => clearTimeout(draftTimer));
                         <span class="material-symbols-outlined text-base">
                             {{ form.processing ? 'hourglass_empty' : 'save' }}
                         </span>
-                        {{ form.processing ? 'Salvando...' : 'Salvar versão' }}
+                        {{ form.processing ? 'Salvando...' : (editId ? 'Salvar alterações' : 'Salvar versão') }}
                     </button>
                 </div>
             </div>

@@ -183,7 +183,7 @@ const linkedin  = computed(() => setting('linkedin_url',    ''));
                     </span>
                     <address class="not-italic" itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
                         <!-- Unidades lado a lado -->
-                        <div :class="['mb-3', companyUnits.length > 1 ? 'grid grid-cols-2 gap-x-6 gap-y-4' : '']">
+                        <div :class="['mb-3', companyUnits.length > 1 ? 'grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4' : '']">
                             <div v-for="(unit, i) in companyUnits" :key="i" class="flex items-start gap-2">
                                 <span class="material-symbols-outlined text-amber-400/80 text-sm mt-0.5 shrink-0">location_on</span>
                                 <div class="min-w-0">

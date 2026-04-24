@@ -38,6 +38,7 @@ class HomeController extends Controller
                 'description_en' => $c->description_en,
                 'cover_url' => $c->cover_url ?? $c->photos->first()?->url,
                 'gallery_urls' => $c->photos->map(fn ($photo) => $photo->url)->values()->all(),
+                'product_category_id' => $c->product_category_id,
             ])
             ->values()
             ->all();

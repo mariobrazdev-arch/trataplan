@@ -20,6 +20,8 @@ use App\Http\Controllers\Admin\PostCategoryAdminController;
 use App\Http\Controllers\Admin\ProductCategoryAdminController;
 use App\Http\Controllers\Admin\ContactAdminController;
 use App\Http\Controllers\Admin\SettingsAdminController;
+use App\Http\Controllers\Admin\AnalyticsAdminController;
+use App\Http\Controllers\AnalyticsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,6 +29,14 @@ use Illuminate\Support\Facades\Route;
 | Public routes — Portuguese (default)
 |--------------------------------------------------------------------------
 */
+// Redirects 301 para URLs antigas indexadas pelo Google
+Route::redirect('/produtos', '/catalogo', 301);
+Route::redirect('/en/products', '/en/catalog', 301);
+
+// English URLs sem prefixo /en/ que o Google indexou incorretamente
+Route::redirect('/contact', '/en/contact', 301);
+Route::redirect('/partners', '/en/partners', 301);
+
 Route::middleware(\App\Http\Middleware\SetPublicCacheHeaders::class)->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/sobre', [AboutController::class, 'show'])->name('about');
@@ -38,7 +48,7 @@ Route::middleware(\App\Http\Middleware\SetPublicCacheHeaders::class)->group(func
     Route::get('/parceiros', [PartnerController::class, 'index'])->name('partners');
     Route::get('/contato', [ContactController::class, 'show'])->name('contact');
 });
-Route::post('/contato', [ContactController::class, 'store'])->name('contact.store');
+Route::post('/contato', [ContactController::class, 'store'])->name('contact.store')->middleware('throttle:contact');
 
 /*
 |--------------------------------------------------------------------------
@@ -56,7 +66,7 @@ Route::middleware(\App\Http\Middleware\SetPublicCacheHeaders::class)->prefix('en
     Route::get('/partners', [PartnerController::class, 'index'])->name('partners');
     Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 });
-Route::prefix('en')->name('en.')->post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::prefix('en')->name('en.')->post('/contact', [ContactController::class, 'store'])->name('contact.store')->middleware('throttle:contact');
 
 /*
 |--------------------------------------------------------------------------
@@ -67,12 +77,20 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap')
 
 /*
 |--------------------------------------------------------------------------
+| Analytics tracking (público, sem CSRF — isentado em bootstrap/app.php)
+|--------------------------------------------------------------------------
+*/
+Route::post('/api/track',          [AnalyticsController::class, 'track'])->name('analytics.track');
+Route::post('/api/track/duration', [AnalyticsController::class, 'duration'])->name('analytics.duration');
+
+/*
+|--------------------------------------------------------------------------
 | Auth routes
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
     Route::get('/admin/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/admin/login', [AuthController::class, 'login'])->name('login.post');
+    Route::post('/admin/login', [AuthController::class, 'login'])->name('login.post')->middleware('throttle:login');
 });
 Route::post('/admin/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
@@ -88,6 +106,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/sobre', [AboutAdminController::class, 'index'])->name('about.index');
     Route::get('/sobre/criar', [AboutAdminController::class, 'create'])->name('about.create');
     Route::post('/sobre', [AboutAdminController::class, 'store'])->name('about.store');
+    Route::get('/sobre/{about}/editar', [AboutAdminController::class, 'edit'])->name('about.edit');
+    Route::put('/sobre/{about}', [AboutAdminController::class, 'update'])->name('about.update');
     Route::post('/sobre/{about}/ativar', [AboutAdminController::class, 'activate'])->name('about.activate');
     Route::delete('/sobre/{about}', [AboutAdminController::class, 'destroy'])->name('about.destroy');
 
@@ -122,6 +142,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Product Categories
     Route::get('/produto-categorias', [ProductCategoryAdminController::class, 'index'])->name('product-categories.index');
     Route::post('/produto-categorias', [ProductCategoryAdminController::class, 'store'])->name('product-categories.store');
+    Route::post('/produto-categorias/reorder', [ProductCategoryAdminController::class, 'reorder'])->name('product-categories.reorder');
     Route::patch('/produto-categorias/{productCategory}', [ProductCategoryAdminController::class, 'update'])->name('product-categories.update');
     Route::delete('/produto-categorias/{productCategory}', [ProductCategoryAdminController::class, 'destroy'])->name('product-categories.destroy');
 
@@ -136,6 +157,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Portfolio — services
     Route::get('/portfolio/servicos', [PortfolioServiceAdminController::class, 'index'])->name('portfolio.services.index');
+    Route::post('/portfolio/servicos/reorder', [PortfolioServiceAdminController::class, 'reorder'])->name('portfolio.services.reorder');
     Route::get('/portfolio/servicos/criar', [PortfolioServiceAdminController::class, 'create'])->name('portfolio.services.create');
     Route::post('/portfolio/servicos', [PortfolioServiceAdminController::class, 'store'])->name('portfolio.services.store');
     Route::get('/portfolio/servicos/{service}/editar', [PortfolioServiceAdminController::class, 'edit'])->name('portfolio.services.edit');
@@ -159,4 +181,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Profile
     Route::get('/perfil', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/perfil', [ProfileController::class, 'update'])->name('profile.update');
+
+    // Analytics
+    Route::get('/analytics', [AnalyticsAdminController::class, 'index'])->name('analytics');
 });

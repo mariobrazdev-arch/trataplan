@@ -23,7 +23,7 @@ class PortfolioCategoryAdminController extends Controller
 
     public function index(): Response
     {
-        $categories = PortfolioCategory::with(['photos', 'productCategory'])->latest('id')->get()->map(fn ($c) => [
+        $categories = PortfolioCategory::with(['photos', 'productCategory'])->orderBy('name_pt')->get()->map(fn ($c) => [
             'id'        => $c->id,
             'name_pt'   => $c->name_pt,
             'name_en'   => $c->name_en,

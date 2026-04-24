@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProductCategory extends Model
 {
-    protected $fillable = ['name_pt', 'name_en', 'description_pt', 'description_en'];
+    protected $fillable = ['name_pt', 'name_en', 'description_pt', 'description_en', 'order'];
 
     public function getName(string $locale = 'pt'): string
     {

@@ -53,6 +53,12 @@ class PostController extends Controller
     public function show(string $slug): Response
     {
         $locale = App::getLocale();
+
+        // Post deletado → 410 Gone (mais rápido de desindexar pelo Google que 404)
+        if (Post::withTrashed()->where('slug', $slug)->whereNotNull('deleted_at')->exists()) {
+            abort(410);
+        }
+
         $post = Post::where('slug', $slug)->published()->with(['postCategory', 'photos'])->firstOrFail();
 
         $prev = Post::published()

@@ -1,6 +1,7 @@
 <script setup>
 import AdminLayout from '@/Components/Layout/AdminLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
+import { useConfirm } from '@/composables/useConfirm';
 
 defineOptions({ layout: null });
 
@@ -8,10 +9,12 @@ const props = defineProps({
     users: Array,
 });
 
-function remove(id) {
-    if (confirm('Excluir este usuário? Esta ação não pode ser desfeita.')) {
-        router.delete(`/admin/usuarios/${id}`, { preserveScroll: true });
-    }
+const { confirm } = useConfirm();
+
+async function remove(id) {
+    const ok = await confirm({ title: 'Excluir usuário', message: 'Excluir este usuário? Esta ação não pode ser desfeita.' });
+    if (!ok) return;
+    router.delete(`/admin/usuarios/${id}`, { preserveScroll: true });
 }
 </script>
 

@@ -15,6 +15,7 @@ class ContactFormRequest extends FormRequest
             'subject' => ['nullable', 'string', 'max:200'],
             'message' => ['required', 'string', 'min:10', 'max:2000'],
             'unit_email' => ['nullable', 'email', 'max:150'],
+            'unit_name'  => ['nullable', 'string', 'max:100'],
         ];
     }
 

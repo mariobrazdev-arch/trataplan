@@ -1,6 +1,7 @@
 <script setup>
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import ConfirmDialog from '@/Components/Admin/ConfirmDialog.vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -25,6 +26,9 @@ const navItems = [
     { separator: true, label: 'Contato' },
     { label: 'Mensagens',     href: '/admin/mensagens', icon: 'mail' },
 
+    { separator: true, label: 'Análises' },
+    { label: 'Analytics',     href: '/admin/analytics',     icon: 'analytics' },
+
     { separator: true, label: 'Configurações' },
     { label: 'Pág. Sobre',    href: '/admin/sobre',         icon: 'info' },
     { label: 'Pág. Home',     href: '/admin/configuracoes', icon: 'settings' },
@@ -47,11 +51,12 @@ function isActive(href) {
 </script>
 
 <template>
+    <ConfirmDialog />
     <div class="min-h-screen bg-background font-body text-on-background selection:bg-primary-fixed selection:text-on-primary-fixed">
 
         <!-- Sidebar -->
         <aside
-            class="h-screen w-64 fixed left-0 top-0 flex flex-col p-6 space-y-4 shadow-2xl z-50 transition-transform duration-300 md:translate-x-0"
+            class="h-screen w-72 fixed left-0 top-0 flex flex-col p-6 space-y-4 shadow-2xl z-50 transition-transform duration-300 md:translate-x-0"
             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
             style="background-color: #012d1d;"
         >
@@ -90,8 +95,8 @@ function isActive(href) {
                         :style="isActive(item.href) ? 'background-color: #77574d;' : ''"
                         @click="sidebarOpen = false"
                     >
-                        <span class="material-symbols-outlined text-lg">{{ item.icon }}</span>
-                        <span>{{ item.label }}</span>
+                        <span class="material-symbols-outlined text-lg shrink-0 normal-case">{{ item.icon }}</span>
+                        <span class="truncate">{{ item.label }}</span>
                     </Link>
                 </template>
             </nav>
@@ -113,14 +118,14 @@ function isActive(href) {
                     :style="isActive('/admin/perfil') ? 'background-color: #77574d; color: white;' : ''"
                     @click="sidebarOpen = false"
                 >
-                    <span class="material-symbols-outlined">manage_accounts</span>
+                    <span class="material-symbols-outlined normal-case">manage_accounts</span>
                     <span>Meu Perfil</span>
                 </Link>
                 <button
                     @click="logout"
                     class="flex items-center space-x-3 p-3 w-full text-emerald-100/70 hover:bg-emerald-800/50 hover:text-white rounded-md transition-all duration-200 font-label text-sm uppercase tracking-widest"
                 >
-                    <span class="material-symbols-outlined">logout</span>
+                    <span class="material-symbols-outlined normal-case">logout</span>
                     <span>Sair</span>
                 </button>
             </div>
@@ -134,7 +139,7 @@ function isActive(href) {
         ></div>
 
         <!-- Main canvas -->
-        <main class="md:ml-64 p-6 md:p-12 min-h-screen">
+        <main class="md:ml-72 p-6 md:p-12 min-h-screen">
 
             <!-- Mobile menu toggle -->
             <button class="md:hidden mb-6 p-1 text-primary" @click="sidebarOpen = !sidebarOpen">

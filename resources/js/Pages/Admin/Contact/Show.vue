@@ -1,17 +1,20 @@
 <script setup>
 import AdminLayout from '@/Components/Layout/AdminLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
+import { useConfirm } from '@/composables/useConfirm';
 
 defineOptions({ layout: null });
 
 const props = defineProps({ message: Object });
 
-function destroy() {
-    if (confirm('Excluir esta mensagem?')) {
-        router.delete(`/admin/mensagens/${props.message.id}`, {
-            onSuccess: () => router.visit('/admin/mensagens'),
-        });
-    }
+const { confirm } = useConfirm();
+
+async function destroy() {
+    const ok = await confirm({ title: 'Excluir mensagem', message: 'Excluir esta mensagem? Esta ação não pode ser desfeita.' });
+    if (!ok) return;
+    router.delete(`/admin/mensagens/${props.message.id}`, {
+        onSuccess: () => router.visit('/admin/mensagens'),
+    });
 }
 </script>
 

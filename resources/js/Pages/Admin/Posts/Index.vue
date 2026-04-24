@@ -2,6 +2,7 @@
 import AdminLayout from '@/Components/Layout/AdminLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import { useConfirm } from '@/composables/useConfirm';
 
 defineOptions({ layout: null });
 
@@ -15,10 +16,12 @@ const filteredPosts = computed(() => {
     return props.posts.data;
 });
 
-function destroy(post) {
-    if (confirm(`Excluir "${post.title_pt}"?`)) {
-        router.delete(`/admin/posts/${post.id}`);
-    }
+const { confirm } = useConfirm();
+
+async function destroy(post) {
+    const ok = await confirm({ title: 'Excluir postagem', message: `Excluir "${post.title_pt}"? Esta ação não pode ser desfeita.` });
+    if (!ok) return;
+    router.delete(`/admin/posts/${post.id}`);
 }
 </script>
 
@@ -87,7 +90,7 @@ function destroy(post) {
                         </span>
                     </div>
                     <h4 class="text-xl font-headline font-extrabold text-primary truncate">{{ post.title_pt }}</h4>
-                    <p class="text-sm font-body line-clamp-2 mt-1 italic" style="color: #414844;">{{ post.title_en }}</p>
+                    
                     <div class="flex items-center gap-6 mt-4">
                         <div class="flex items-center gap-1" style="color: #717973;">
                             <span class="material-symbols-outlined text-sm">photo_library</span>

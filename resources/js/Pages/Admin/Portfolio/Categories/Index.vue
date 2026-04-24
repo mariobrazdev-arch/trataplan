@@ -1,14 +1,17 @@
 <script setup>
 import AdminLayout from '@/Components/Layout/AdminLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
+import { useConfirm } from '@/composables/useConfirm';
 
 defineOptions({ layout: null });
 defineProps({ categories: Array });
 
-function destroy(cat) {
-    if (confirm(`Remover "${cat.name_pt}"?`)) {
-        router.delete(`/admin/portfolio/categorias/${cat.id}`);
-    }
+const { confirm } = useConfirm();
+
+async function destroy(cat) {
+    const ok = await confirm({ title: 'Remover categoria', message: `Remover "${cat.name_pt}"? Esta ação não pode ser desfeita.` });
+    if (!ok) return;
+    router.delete(`/admin/portfolio/categorias/${cat.id}`);
 }
 </script>
 
@@ -70,7 +73,7 @@ function destroy(cat) {
                         </span>
                     </div>
                     <h4 class="text-xl font-headline font-extrabold text-primary">{{ cat.name_pt }}</h4>
-                    <p class="text-sm font-body italic mt-1" style="color: #414844;">{{ cat.name_en }}</p>
+                    
                     <p v-if="cat.description_pt" class="text-sm font-body line-clamp-2 mt-1 italic" style="color: #717973;">{{ cat.description_pt }}</p>
                     <div class="flex items-center gap-6 mt-4">
                         <div class="flex items-center gap-1" style="color: #717973;">

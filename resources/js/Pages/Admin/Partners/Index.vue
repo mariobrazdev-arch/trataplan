@@ -1,14 +1,17 @@
 <script setup>
 import AdminLayout from '@/Components/Layout/AdminLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
+import { useConfirm } from '@/composables/useConfirm';
 
 defineOptions({ layout: null });
 defineProps({ partners: Array });
 
-function destroy(partner) {
-    if (confirm(`Remover "${partner.name}"?`)) {
-        router.delete(`/admin/parceiros/${partner.id}`);
-    }
+const { confirm } = useConfirm();
+
+async function destroy(partner) {
+    const ok = await confirm({ title: 'Remover parceiro', message: `Remover "${partner.name}"? Esta ação não pode ser desfeita.` });
+    if (!ok) return;
+    router.delete(`/admin/parceiros/${partner.id}`);
 }
 
 function initials(name) {

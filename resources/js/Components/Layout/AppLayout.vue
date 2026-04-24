@@ -3,11 +3,64 @@ import Navbar from '@/Components/Layout/Navbar.vue';
 import Footer from '@/Components/Layout/Footer.vue';
 import FloatingButtons from '@/Components/Layout/FloatingButtons.vue';
 import WhatsAppPicker from '@/Components/WhatsAppPicker.vue';
-import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { usePage, router } from '@inertiajs/vue3';
+import { computed, onMounted, onBeforeUnmount } from 'vue';
 
 const page = usePage();
 const flash = computed(() => page.props.flash);
+
+// ── Analytics tracking ───────────────────────────────────────────────────────
+let trackId   = null;
+let trackStart = null;
+const offListeners = [];
+
+async function trackView() {
+    trackStart = Date.now();
+    trackId = null;
+    try {
+        const res = await fetch('/api/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                url:      window.location.pathname + window.location.search,
+                title:    document.title,
+                referrer: document.referrer,
+            }),
+        });
+        const data = await res.json();
+        trackId = data.id ?? null;
+    } catch {}
+}
+
+function sendDuration() {
+    if (!trackId || !trackStart) return;
+    const secs = Math.round((Date.now() - trackStart) / 1000);
+    if (secs < 1) return;
+    navigator.sendBeacon?.('/api/track/duration',
+        new Blob([JSON.stringify({ id: trackId, duration: secs })], { type: 'application/json' })
+    );
+    trackId = null;
+    trackStart = null;
+}
+
+function onVisibilityChange() {
+    if (document.visibilityState === 'hidden') sendDuration();
+}
+
+onMounted(() => {
+    trackView();
+    offListeners.push(router.on('before',   () => sendDuration()));
+    offListeners.push(router.on('navigate', () => setTimeout(trackView, 80)));
+    window.addEventListener('beforeunload',     sendDuration);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+});
+
+onBeforeUnmount(() => {
+    sendDuration();
+    offListeners.forEach(fn => fn());
+    window.removeEventListener('beforeunload',      sendDuration);
+    document.removeEventListener('visibilitychange', onVisibilityChange);
+});
 </script>
 
 <template>

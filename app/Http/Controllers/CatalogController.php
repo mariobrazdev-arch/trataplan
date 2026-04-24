@@ -16,14 +16,18 @@ class CatalogController extends Controller
         $locale = App::getLocale();
 
         // Product categories (filters sidebar)
-        $productCategories = ProductCategory::orderBy('name_pt')->get(['id', 'name_pt', 'name_en'])->map(fn ($c) => [
+        $productCategories = ProductCategory::orderBy('order')->get(['id', 'name_pt', 'name_en'])->map(fn ($c) => [
             'id'   => $c->id,
             'name' => $locale === 'en' ? ($c->name_en ?: $c->name_pt) : $c->name_pt,
         ])->toArray();
 
         // Products grouped by category
-        $products = PortfolioCategory::active()
+        $products = PortfolioCategory::where('is_active', true)
+            ->leftJoin('product_categories', 'portfolio_categories.product_category_id', '=', 'product_categories.id')
+            ->orderBy('product_categories.order')
+            ->orderBy('portfolio_categories.id')
             ->with(['photos', 'productCategory'])
+            ->select('portfolio_categories.*')
             ->get()
             ->map(fn ($c) => [
                 'id'                  => $c->id,

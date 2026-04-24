@@ -16,13 +16,14 @@ class AboutPageVersion extends Model
         'hero_badge_label_pt', 'hero_badge_label_en',
         'history_title_pt', 'history_title_en',
         'history_content_pt', 'history_content_en',
-        'history_photo', 'history_items',
+        'history_photo', 'history_youtube_url', 'history_items',
         'quality_title_pt', 'quality_title_en',
         'quality_subtitle_pt', 'quality_subtitle_en',
         'quality_items',
         'cta_section_name',
         'cta_title_pt', 'cta_title_en',
         'cta_subtitle_pt', 'cta_subtitle_en',
+        'cta_photo',
     ];
 
     protected $casts = [
@@ -44,5 +45,10 @@ class AboutPageVersion extends Model
     public function getHistoryPhotoUrlAttribute(): ?string
     {
         return $this->history_photo ? Storage::url($this->history_photo) : null;
+    }
+
+    public function getCtaPhotoUrlAttribute(): ?string
+    {
+        return $this->cta_photo ? Storage::url($this->cta_photo) : null;
     }
 }

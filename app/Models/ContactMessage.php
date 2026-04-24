@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 class ContactMessage extends Model
 {
     protected $fillable = [
-        'name', 'email', 'phone', 'subject', 'message', 'locale', 'unit_email',
+        'name', 'email', 'phone', 'subject', 'message', 'locale', 'unit_email', 'unit_name',
     ];
 
     protected $casts = [

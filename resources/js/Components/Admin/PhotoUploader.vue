@@ -1,5 +1,9 @@
 <script setup>
 import { ref } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { useConfirm } from '@/composables/useConfirm';
+
+const { confirm } = useConfirm();
 
 const props = defineProps({
     existing: { type: Array, default: () => [] },
@@ -24,6 +28,12 @@ function removePending(index) {
     previews.value.splice(index, 1);
     emit('update:modelValue', previews.value.map(p => p.file));
 }
+
+async function deleteExisting(photoId) {
+    const ok = await confirm({ title: 'Remover foto', message: 'Deseja remover esta foto? Esta ação não pode ser desfeita.' });
+    if (!ok) return;
+    router.delete(`${props.deleteUrlPrefix}/${photoId}`);
+}
 </script>
 
 <template>
@@ -33,13 +43,11 @@ function removePending(index) {
             <div v-for="photo in existing" :key="photo.id"
                 class="relative rounded-xl overflow-hidden" style="width: 120px; height: 90px;">
                 <img :src="photo.url" class="w-full h-full object-cover" />
-                <a :href="`${deleteUrlPrefix}/${photo.id}`"
-                    onclick="return confirm('Remover esta foto?')"
+                <button type="button" @click="deleteExisting(photo.id)"
                     class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full text-white text-xs"
-                    style="background-color: rgba(186,26,26,0.85);"
-                    data-method="delete">
+                    style="background-color: rgba(186,26,26,0.85);">
                     <span class="material-symbols-outlined text-sm">close</span>
-                </a>
+                </button>
             </div>
         </div>
 

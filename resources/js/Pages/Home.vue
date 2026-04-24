@@ -151,7 +151,7 @@ function prevServices() {
     <SeoHead v-bind="seo" />
 
     <!-- ──────────────────────────────── HERO ──────────────────────────────────── -->
-    <section class="relative h-[921px] flex items-center overflow-hidden">
+    <section class="relative min-h-[560px] md:h-[921px] flex items-center overflow-hidden">
         <div class="absolute inset-0 z-0">
             <img
                 class="w-full h-full object-cover"
@@ -162,7 +162,7 @@ function prevServices() {
         </div>
         <div class="container mx-auto px-6 relative z-10 grid md:grid-cols-2">
             <div class="max-w-2xl">
-                <h2 class="text-emerald-50 font-headline font-extrabold text-5xl md:text-7xl tracking-tight leading-[1.1] mb-6">
+                <h2 class="text-emerald-50 font-headline font-extrabold text-4xl md:text-5xl lg:text-7xl tracking-tight leading-[1.1] mb-6">
                     {{ bannerTitle }}
                 </h2>
                 <p class="text-emerald-50/80 text-xl font-body mb-10 max-w-lg leading-relaxed italic">
@@ -202,11 +202,14 @@ function prevServices() {
                 </p>
             </div>
 
-            <div v-if="displayCategories.length" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div
+            <div v-if="displayCategories.length" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a
                     v-for="(item, i) in displayCategories"
                     :key="item.id ?? i"
-                    class="group relative aspect-[3/4] overflow-hidden rounded-xl bg-surface-container-highest"
+                    :href="item.product_category_id
+                        ? (locale === 'en' ? '/en/catalog' : '/catalogo') + '?cat=' + item.product_category_id
+                        : (locale === 'en' ? '/en/catalog' : '/catalogo')"
+                    class="group relative aspect-[3/4] overflow-hidden rounded-xl bg-surface-container-highest block"
                     :class="{ 'md:mt-12': i === 1 || i === 3 }"
                 >
                     <img
@@ -226,7 +229,7 @@ function prevServices() {
                             {{ item.description }}
                         </p>
                     </div>
-                </div>
+                </a>
             </div>
             <div v-else class="rounded-2xl p-10 text-center" style="background-color: #f0ede8;">
                 <p class="font-headline font-bold text-xl text-primary mb-2">{{ t('Nenhum produto cadastrado', 'No products registered') }}</p>
@@ -274,18 +277,21 @@ function prevServices() {
                 </button>
             </div>
 
-            <div v-if="visibleServices.length" class="grid grid-cols-1 md:grid-cols-3 gap-12">
-                <div
+            <div v-if="visibleServices.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 md:gap-12">
+                <a
                     v-for="(item, i) in visibleServices"
                     :key="item.id"
-                    class="space-y-6"
-                    :class="{ 'md:pt-24': i === 1 }"
+                    :href="locale === 'en' ? '/en/catalog?cat=service' : '/catalogo?cat=service'"
+                    class="space-y-6 block group"
+                    :class="{ 'md:pt-24': i === 1 && visibleServices.length === 3 }"
                 >
-                    <img :src="item.image" :alt="item.title" class="w-full h-[500px] object-cover rounded-xl shadow-lg" />
-                    <h5 class="text-primary font-headline font-bold text-xl">{{ item.title }}</h5>
+                    <div class="overflow-hidden rounded-xl shadow-lg">
+                        <img :src="item.image" :alt="item.title" class="w-full h-[280px] md:h-[500px] object-cover transition-transform duration-700 group-hover:scale-105" />
+                    </div>
+                    <h5 class="text-primary font-headline font-bold text-xl group-hover:underline">{{ item.title }}</h5>
                     <p class="text-on-surface-variant text-sm font-label uppercase tracking-widest">{{ item.tag }}</p>
                     <p v-if="item.description" class="text-on-surface-variant font-body text-base leading-relaxed">{{ item.description }}</p>
-                </div>
+                </a>
             </div>
             <div v-else class="rounded-2xl p-10 text-center" style="background-color: #f0ede8;">
                 <p class="font-headline font-bold text-xl text-primary mb-2">{{ t('Nenhuma mão de obra cadastrada', 'No workforce items registered') }}</p>
@@ -342,7 +348,7 @@ function prevServices() {
                         :alt="t('Processo de tratamento em autoclave', 'Autoclave treatment process')"
                         class="rounded-2xl shadow-2xl"
                     />
-                    <div class="absolute -bottom-10 -left-10 bg-secondary px-10 py-12 rounded-xl shadow-2xl max-w-xs">
+                    <div class="hidden md:block absolute -bottom-10 -left-10 bg-secondary px-10 py-12 rounded-xl shadow-2xl max-w-xs">
                         <p class="text-white font-headline font-black text-6xl leading-none">15</p>
                         <p class="text-amber-200 font-headline font-bold text-xl uppercase tracking-tighter">
                             {{ t('Anos de Tranquilidade', 'Years of Peace of Mind') }}
@@ -371,7 +377,7 @@ function prevServices() {
                     class="group cursor-pointer"
                 >
                     <Link :href="(locale === 'en' ? '/en/blog/' : '/blog/') + post.slug">
-                        <div class="relative h-[400px] rounded-2xl overflow-hidden mb-6">
+                        <div class="relative h-[220px] md:h-[400px] rounded-2xl overflow-hidden mb-6">
                             <img
                                 v-if="post.featured_image_url"
                                 :src="post.featured_image_url"
@@ -435,7 +441,7 @@ function prevServices() {
             </div>
 
             <!-- Grid: card + mapa -->
-            <div class="grid md:grid-cols-[380px_1fr] gap-6 items-stretch">
+            <div class="grid md:grid-cols-[320px_1fr] lg:grid-cols-[380px_1fr] gap-6 items-stretch">
 
                 <!-- Card de contato -->
                 <div class="rounded-2xl overflow-hidden flex flex-col shadow-xl" style="background-color: #012d1d;">

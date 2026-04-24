@@ -31,17 +31,18 @@ class ContactController extends Controller
 
     public function store(ContactFormRequest $request): RedirectResponse
     {
+        // Honeypot: bots preenchem campos ocultos, humanos não
+        if ($request->filled('website')) {
+            return back()->with('success', true);
+        }
+
         $message = ContactMessage::create([
             ...$request->validated(),
             'locale' => App::getLocale(),
         ]);
 
         $contactEmail = Setting::get('contact_email', 'trataplan@trataplan.com.br');
-
-        // Se o formulário enviou o e-mail da unidade selecionada, usa ele; caso contrário usa o padrão
-        $toEmail = filter_var($request->input('unit_email'), FILTER_VALIDATE_EMAIL)
-            ? $request->input('unit_email')
-            : $contactEmail;
+        $toEmail = $contactEmail;
 
         // Aplica config SMTP do banco se configurada
         $mailHost = Setting::get('mail_host');
@@ -64,7 +65,13 @@ class ContactController extends Controller
             ]);
         }
 
-        Mail::to($toEmail)->queue(new ContactFormMail($message));
+        try {
+            Mail::to($toEmail)->send(new ContactFormMail($message));
+        } catch (\Exception $e) {
+            report($e);
+            // Mensagem foi salva no banco — só o email falhou
+            return back()->with('mail_error', true);
+        }
 
         return back()->with('success', true);
     }

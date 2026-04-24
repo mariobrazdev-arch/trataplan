@@ -17,8 +17,12 @@ class ContactFormMail extends Mailable
 
     public function envelope(): Envelope
     {
+        $unitPart = $this->contactMessage->unit_name
+            ? ' — ' . $this->contactMessage->unit_name
+            : '';
+
         return new Envelope(
-            subject: '[Trataplan] ' . ($this->contactMessage->subject ?: 'Nova mensagem de contato'),
+            subject: '[Trataplan' . $unitPart . '] ' . ($this->contactMessage->subject ?: 'Nova mensagem de contato'),
             replyTo: [new \Illuminate\Mail\Mailables\Address($this->contactMessage->email, $this->contactMessage->name)],
         );
     }

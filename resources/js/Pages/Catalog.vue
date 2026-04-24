@@ -2,7 +2,7 @@
 import SeoHead from '@/Components/Shared/SeoHead.vue';
 import { Link, router } from '@inertiajs/vue3';
 import { useLocale } from '@/composables/useLocale';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 
 const props = defineProps({
     items: Array,
@@ -15,6 +15,16 @@ const { locale, t } = useLocale();
 // ── Filtro ──────────────────────────────────────────────────────
 // null = todos | 'service' = só mão de obra | number = product_category_id
 const activeFilter = ref(null);
+
+onMounted(() => {
+    const param = new URLSearchParams(window.location.search).get('cat');
+    if (param && param !== 'service') {
+        const id = parseInt(param);
+        if (!isNaN(id)) activeFilter.value = id;
+    } else if (param === 'service') {
+        activeFilter.value = 'service';
+    }
+});
 
 const categoryFilters = computed(() => [
     {
@@ -56,6 +66,21 @@ function loadMore() {
 
 // Resetar paginação ao trocar filtro
 function setFilter(key) {
+    const all = props.items ?? [];
+    let results;
+    if (key === null) {
+        results = all;
+    } else if (key === 'service') {
+        results = all.filter(i => i.type === 'service');
+    } else {
+        results = all.filter(i => i.product_category_id === key);
+    }
+
+    if (key !== null && results.length === 1) {
+        router.visit(itemUrl(results[0]));
+        return;
+    }
+
     activeFilter.value = key;
     visibleCount.value = pageSize;
 }
@@ -125,7 +150,7 @@ function itemUrl(item) {
                         v-for="filter in categoryFilters"
                         :key="String(filter.key)"
                         @click="setFilter(filter.key)"
-                        class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 group"
+                        class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 group cursor-pointer"
                         :style="activeFilter === filter.key
                             ? 'background-color: #012d1d; color: #fff;'
                             : 'background-color: transparent; color: #414844;'">
@@ -198,14 +223,12 @@ function itemUrl(item) {
                     <article
                         v-for="(item, idx) in visibleItems"
                         :key="`${item.type}-${item.id}`"
-                        class="group relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 cursor-pointer"
-                        :class="idx === 0 && activeFilter === null ? 'sm:col-span-2 xl:col-span-1' : ''"
+                        class="group relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 cursor-pointer h-[280px] md:h-[420px]"
                         style="background-color: #1a1a1a;"
                         @click="router.visit(itemUrl(item))">
 
                         <!-- Image -->
-                        <div class="relative overflow-hidden"
-                            :style="idx === 0 && activeFilter === null ? 'height: 420px;' : 'height: 260px;'">
+                        <div class="relative overflow-hidden h-full">
                             <img
                                 :src="item.cover_url || fallbackImg(idx)"
                                 :alt="item.name"
@@ -231,13 +254,12 @@ function itemUrl(item) {
                                 {{ item.category_label }}
                             </span>
                             <!-- Name -->
-                            <h3 class="font-black text-white leading-tight"
-                                :class="idx === 0 && activeFilter === null ? 'text-2xl' : 'text-base'"
+                            <h3 class="font-black text-white leading-tight text-2xl"
                                 style="font-family: Manrope, sans-serif; text-shadow: 0 1px 4px rgba(0,0,0,0.6);">
                                 {{ item.name }}
                             </h3>
-                            <!-- Description (only on large first card) -->
-                            <p v-if="idx === 0 && activeFilter === null && item.description"
+                            <!-- Description -->
+                            <p v-if="item.description"
                                 class="text-sm mt-1.5 line-clamp-2 text-white/70"
                                 style="font-family: Newsreader, serif;">
                                 {{ item.description }}

@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import AdminLayout from '@/Components/Layout/AdminLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
+import { useConfirm } from '@/composables/useConfirm';
 
 defineOptions({ layout: null });
 
@@ -27,16 +28,18 @@ function closeView() {
     viewing.value = null;
 }
 
-// ── Ações ────────────────────────────────────────────────────────────────────
-function activate(id) {
-    if (confirm('Ativar esta versão? A versão atual será desativada.')) {
-        router.post(`/admin/sobre/${id}/ativar`, {}, { preserveScroll: true });
-    }
+const { confirm } = useConfirm();
+
+// ── Ações ────────────────────────────────────────────
+async function activate(id) {
+    const ok = await confirm({ title: 'Ativar versão', message: 'Ativar esta versão? A versão atual será desativada.', type: 'warning', confirmLabel: 'Ativar' });
+    if (!ok) return;
+    router.post(`/admin/sobre/${id}/ativar`, {}, { preserveScroll: true });
 }
-function remove(id) {
-    if (confirm('Excluir esta versão do histórico? Esta ação não pode ser desfeita.')) {
-        router.delete(`/admin/sobre/${id}`, { preserveScroll: true });
-    }
+async function remove(id) {
+    const ok = await confirm({ title: 'Excluir versão', message: 'Excluir esta versão do histórico? Esta ação não pode ser desfeita.' });
+    if (!ok) return;
+    router.delete(`/admin/sobre/${id}`, { preserveScroll: true });
 }
 </script>
 
@@ -126,6 +129,18 @@ function remove(id) {
                     >
                         <span class="material-symbols-outlined">visibility</span>
                     </button>
+
+                    <!-- Editar -->
+                    <Link
+                        :href="`/admin/sobre/${v.id}/editar`"
+                        class="p-2 rounded-lg transition-colors block"
+                        title="Editar esta versão"
+                        style="color: #1d4ed8;"
+                        @mouseenter="$event.currentTarget.style.backgroundColor='#eff6ff'"
+                        @mouseleave="$event.currentTarget.style.backgroundColor='transparent'"
+                    >
+                        <span class="material-symbols-outlined">edit</span>
+                    </Link>
 
                     <!-- Clonar -->
                     <Link
