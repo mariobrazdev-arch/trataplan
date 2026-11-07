@@ -2,26 +2,21 @@
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { usePage } from '@inertiajs/vue3';
-import { useLocale } from '@/composables/useLocale';
 import { useSettings } from '@/composables/useSettings';
 import { useWhatsAppPicker } from '@/composables/useWhatsAppPicker';
 
-const { locale, t } = useLocale();
 const { setting, logoTransparentUrl } = useSettings();
 const { open } = useWhatsAppPicker();
 const page = usePage();
 
-const prefix = computed(() => locale.value === 'en' ? '/en' : '');
+const navLinks = [
+    { label: 'Início',  href: '/' },
+    { label: 'Sobre',   href: '/sobre' },
+    { label: 'Blog',    href: '/blog' },
+    { label: 'Contato', href: '/contato' },
+];
 
-const navLinks = computed(() => [
-    { label: t('Início', 'Home'),        href: prefix.value + '/' },
-    { label: t('Sobre', 'About'),        href: prefix.value + (locale.value === 'en' ? '/about'    : '/sobre') },
-    { label: t('Catálogo', 'Catalog'),   href: prefix.value + (locale.value === 'en' ? '/catalog'  : '/catalogo') },
-    { label: 'Blog',                     href: prefix.value + '/blog' },
-    { label: t('Contato', 'Contact'),    href: prefix.value + (locale.value === 'en' ? '/contact'  : '/contato') },
-]);
-
-const catalogLinks = computed(() => page.props.catalog_footer ?? []);
+const portfolioLinks = computed(() => page.props.portfolio_footer ?? []);
 
 const currentYear = new Date().getFullYear();
 
@@ -55,7 +50,7 @@ const linkedin  = computed(() => setting('linkedin_url',    ''));
 
                 <!-- Col 1: Brand -->
                 <div class="sm:col-span-2 lg:col-span-1">
-                    <Link :href="locale === 'en' ? '/en' : '/'" class="inline-flex items-center gap-2.5 mb-5">
+                    <Link href="/" class="inline-flex items-center gap-2.5 mb-5">
                         <img
                             v-if="logoTransparentUrl"
                             :src="logoTransparentUrl"
@@ -132,7 +127,7 @@ const linkedin  = computed(() => setting('linkedin_url',    ''));
                 <div>
                     <span class="block text-xs font-bold uppercase tracking-widest mb-5"
                           style="color: rgba(255,255,255,0.4); font-family: Manrope, sans-serif;">
-                        {{ t('Navegação', 'Navigation') }}
+                        Navegação
                     </span>
                     <ul class="space-y-3">
                         <li v-for="link in navLinks" :key="link.href">
@@ -147,23 +142,23 @@ const linkedin  = computed(() => setting('linkedin_url',    ''));
                     </ul>
                 </div>
 
-                <!-- Col 3: Catálogo -->
+                <!-- Col 3: Portfólio -->
                 <div>
                     <span class="block text-xs font-bold uppercase tracking-widest mb-5"
                           style="color: rgba(255,255,255,0.4); font-family: Manrope, sans-serif;">
-                        {{ t('Catálogo', 'Catalog') }}
+                        Portfólio
                     </span>
                     <ul class="space-y-3">
                         <li>
                             <Link
-                                :href="prefix + (locale === 'en' ? '/catalog' : '/catalogo')"
+                                href="/portfolio"
                                 class="text-xs font-bold text-amber-400/70 hover:text-amber-400 transition-colors duration-150 uppercase tracking-wider"
                                 style="font-family: Manrope, sans-serif;"
                             >
-                                {{ t('Ver todos', 'View all') }}
+                                Ver todos
                             </Link>
                         </li>
-                        <li v-for="link in catalogLinks" :key="link.href">
+                        <li v-for="link in portfolioLinks" :key="link.href">
                             <Link
                                 :href="link.href"
                                 class="text-sm text-white/60 hover:text-white transition-colors duration-150"
@@ -179,7 +174,7 @@ const linkedin  = computed(() => setting('linkedin_url',    ''));
                 <div>
                     <span class="block text-xs font-bold uppercase tracking-widest mb-4"
                           style="color: rgba(255,255,255,0.4); font-family: Manrope, sans-serif;">
-                        {{ t('Contato', 'Contact') }}
+                        Contato
                     </span>
                     <address class="not-italic" itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
                         <!-- Unidades lado a lado -->
@@ -248,7 +243,7 @@ const linkedin  = computed(() => setting('linkedin_url',    ''));
                 <p class="text-sm text-center sm:text-left text-white/70"
                    style="font-family: Manrope, sans-serif;">
                     &copy; {{ currentYear }} Trataplan &ndash;
-                    {{ t('Todos os direitos reservados.', 'All rights reserved.') }}
+                    Todos os direitos reservados.
                 </p>
                 <p class="text-sm flex items-center gap-1.5 text-white/50"
                    style="font-family: Manrope, sans-serif;">

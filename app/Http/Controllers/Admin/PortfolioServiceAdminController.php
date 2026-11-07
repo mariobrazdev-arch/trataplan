@@ -14,6 +14,8 @@ use Inertia\Response;
 
 class PortfolioServiceAdminController extends Controller
 {
+    private const MAX_PHOTOS = 25;
+
     public function index(): Response
     {
         $services = PortfolioService::with('photos')
@@ -22,7 +24,6 @@ class PortfolioServiceAdminController extends Controller
             ->map(fn ($s) => [
                 'id'           => $s->id,
                 'name_pt'      => $s->name_pt,
-                'name_en'      => $s->name_en,
                 'is_active'    => $s->is_active,
                 'order'        => $s->order,
                 'cover_url'    => $s->cover_url ?? $s->photos->first()?->url,
@@ -41,14 +42,14 @@ class PortfolioServiceAdminController extends Controller
     {
         $validated = $request->validate([
             'name_pt'        => ['required', 'string', 'max:200'],
-            'name_en'        => ['required', 'string', 'max:200'],
             'description_pt' => ['nullable', 'string'],
-            'description_en' => ['nullable', 'string'],
             'cover_photo'    => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
             'order'          => ['integer', 'min:0'],
             'is_active'      => ['boolean'],
-            'new_photos'     => ['nullable', 'array'],
+            'new_photos'     => ['nullable', 'array', 'max:' . self::MAX_PHOTOS],
             'new_photos.*'   => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+        ], [
+            'new_photos.max' => 'Cada item pode ter no máximo ' . self::MAX_PHOTOS . ' fotos.',
         ]);
 
         $service = PortfolioService::create(collect($validated)->except(['cover_photo', 'new_photos'])->all());
@@ -83,9 +84,7 @@ class PortfolioServiceAdminController extends Controller
             'service' => [
                 'id'             => $service->id,
                 'name_pt'        => $service->name_pt,
-                'name_en'        => $service->name_en,
                 'description_pt' => $service->description_pt,
-                'description_en' => $service->description_en,
                 'cover_url'      => $service->cover_url,
                 'order'          => $service->order,
                 'is_active'      => $service->is_active,
@@ -99,16 +98,18 @@ class PortfolioServiceAdminController extends Controller
 
     public function update(Request $request, PortfolioService $service): RedirectResponse
     {
+        $existingPhotosCount = $service->photos()->count();
+
         $validated = $request->validate([
             'name_pt'        => ['required', 'string', 'max:200'],
-            'name_en'        => ['required', 'string', 'max:200'],
             'description_pt' => ['nullable', 'string'],
-            'description_en' => ['nullable', 'string'],
             'cover_photo'    => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
             'order'          => ['integer', 'min:0'],
             'is_active'      => ['boolean'],
-            'new_photos'     => ['nullable', 'array'],
+            'new_photos'     => ['nullable', 'array', 'max:' . max(0, self::MAX_PHOTOS - $existingPhotosCount)],
             'new_photos.*'   => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+        ], [
+            'new_photos.max' => 'Cada item pode ter no máximo ' . self::MAX_PHOTOS . ' fotos. Este item já possui ' . $existingPhotosCount . '.',
         ]);
 
         $service->update(collect($validated)->except(['cover_photo', 'new_photos'])->all());

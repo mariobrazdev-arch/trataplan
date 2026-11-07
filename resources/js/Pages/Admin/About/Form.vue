@@ -24,9 +24,9 @@ const historyItems = ref(
     props.prefill?.history_items?.length
         ? props.prefill.history_items.map(i => ({ ...i }))
         : [
-            { value: '+15',  label_pt: 'Anos de mercado',   label_en: 'Years in market' },
-            { value: '100%', label_pt: 'Reflorestamento',   label_en: 'Reforestation' },
-            { value: 'SC',   label_pt: 'Santa Catarina',    label_en: 'Santa Catarina' },
+            { value: '+15',  label_pt: 'Anos de mercado' },
+            { value: '100%', label_pt: 'Reflorestamento' },
+            { value: 'SC',   label_pt: 'Santa Catarina' },
           ]
 );
 
@@ -34,17 +34,17 @@ const qualityItems = ref(
     props.prefill?.quality_items?.length
         ? props.prefill.quality_items.map(i => ({ ...i }))
         : [
-            { icon: 'park',                   title_pt: '100% Reflorestamento',  title_en: '100% Reforestation',         desc_pt: 'Trabalhamos exclusivamente com Eucalipto e Pinus oriundos de florestas plantadas e manejadas de forma sustentável.', desc_en: 'We work exclusively with Eucalyptus and Pine from sustainably managed planted forests.' },
-            { icon: 'precision_manufacturing', title_pt: 'Autoclave Vácuo-Pressão', title_en: 'Vacuum-Pressure Autoclave', desc_pt: 'O processo de impregnação sob alta pressão garante penetração total do preservativo em cada fibra da madeira.', desc_en: 'The high-pressure impregnation process ensures total preservative penetration into every wood fiber.' },
-            { icon: 'verified_user',            title_pt: 'Garantia de 15 Anos',    title_en: '15-Year Guarantee',         desc_pt: 'Confiança respaldada por certificação e pelo compromisso com a qualidade que só a experiência pode oferecer.', desc_en: 'Confidence backed by certification and the commitment to quality that only experience can offer.' },
+            { icon: 'park',                   title_pt: '100% Reflorestamento',  desc_pt: 'Trabalhamos exclusivamente com Eucalipto e Pinus oriundos de florestas plantadas e manejadas de forma sustentável.' },
+            { icon: 'precision_manufacturing', title_pt: 'Autoclave Vácuo-Pressão', desc_pt: 'O processo de impregnação sob alta pressão garante penetração total do preservativo em cada fibra da madeira.' },
+            { icon: 'verified_user',            title_pt: 'Garantia de 15 Anos',    desc_pt: 'Confiança respaldada por certificação e pelo compromisso com a qualidade que só a experiência pode oferecer.' },
           ]
 );
 
-function addHistoryItem()  { historyItems.value.push({ value: '', label_pt: '', label_en: '' }); }
+function addHistoryItem()  { historyItems.value.push({ value: '', label_pt: '' }); }
 function removeHistoryItem(i) { historyItems.value.splice(i, 1); }
 
 function addQualityItem()  {
-    qualityItems.value.push({ icon: 'star', title_pt: '', title_en: '', desc_pt: '', desc_en: '' });
+    qualityItems.value.push({ icon: 'star', title_pt: '', desc_pt: '' });
 }
 function removeQualityItem(i) { qualityItems.value.splice(i, 1); }
 
@@ -59,33 +59,24 @@ const form = useForm({
     activate_now:         false,
 
     hero_title_pt:        props.prefill?.hero_title_pt        ?? '',
-    hero_title_en:        props.prefill?.hero_title_en        ?? '',
     hero_subtitle_pt:     props.prefill?.hero_subtitle_pt     ?? '',
-    hero_subtitle_en:     props.prefill?.hero_subtitle_en     ?? '',
     hero_photo:           null,
     keep_hero_photo:      props.prefill?.hero_photo_path      ?? '',
     hero_badge_value:     props.prefill?.hero_badge_value     ?? '+15',
     hero_badge_label_pt:  props.prefill?.hero_badge_label_pt  ?? 'Anos de mercado',
-    hero_badge_label_en:  props.prefill?.hero_badge_label_en  ?? 'Years in market',
 
     history_title_pt:     props.prefill?.history_title_pt     ?? '',
-    history_title_en:     props.prefill?.history_title_en     ?? '',
     history_content_pt:   props.prefill?.history_content_pt   ?? '',
-    history_content_en:   props.prefill?.history_content_en   ?? '',
     history_photo:        null,
     keep_history_photo:   props.prefill?.history_photo_path   ?? '',
     history_youtube_url:  props.prefill?.history_youtube_url  ?? '',
 
     quality_title_pt:     props.prefill?.quality_title_pt     ?? '',
-    quality_title_en:     props.prefill?.quality_title_en     ?? '',
     quality_subtitle_pt:  props.prefill?.quality_subtitle_pt  ?? '',
-    quality_subtitle_en:  props.prefill?.quality_subtitle_en  ?? '',
 
     cta_section_name:     props.prefill?.cta_section_name     ?? 'Seção Reflorestamento',
     cta_title_pt:         props.prefill?.cta_title_pt         ?? '',
-    cta_title_en:         props.prefill?.cta_title_en         ?? '',
     cta_subtitle_pt:      props.prefill?.cta_subtitle_pt      ?? '',
-    cta_subtitle_en:      props.prefill?.cta_subtitle_en      ?? '',
     cta_photo:            null,
     keep_cta_photo:       props.prefill?.cta_photo_path       ?? '',
 });
@@ -137,12 +128,12 @@ let draftTimer = null;
 
 const DRAFT_TEXT_FIELDS = [
     'version_label',
-    'hero_title_pt', 'hero_title_en', 'hero_subtitle_pt', 'hero_subtitle_en',
-    'keep_hero_photo', 'hero_badge_value', 'hero_badge_label_pt', 'hero_badge_label_en',
-    'history_title_pt', 'history_title_en', 'history_content_pt', 'history_content_en',
+    'hero_title_pt', 'hero_subtitle_pt',
+    'keep_hero_photo', 'hero_badge_value', 'hero_badge_label_pt',
+    'history_title_pt', 'history_content_pt',
     'keep_history_photo', 'history_youtube_url',
-    'quality_title_pt', 'quality_title_en', 'quality_subtitle_pt', 'quality_subtitle_en',
-    'cta_section_name', 'cta_title_pt', 'cta_title_en', 'cta_subtitle_pt', 'cta_subtitle_en',
+    'quality_title_pt', 'quality_subtitle_pt',
+    'cta_section_name', 'cta_title_pt', 'cta_subtitle_pt',
     'activate_now',
 ];
 
@@ -182,17 +173,17 @@ onMounted(() => {
 watch(
     [
         () => form.version_label,
-        () => form.hero_title_pt, () => form.hero_title_en,
-        () => form.hero_subtitle_pt, () => form.hero_subtitle_en,
-        () => form.hero_badge_value, () => form.hero_badge_label_pt, () => form.hero_badge_label_en,
-        () => form.history_title_pt, () => form.history_title_en,
-        () => form.history_content_pt, () => form.history_content_en,
+        () => form.hero_title_pt,
+        () => form.hero_subtitle_pt,
+        () => form.hero_badge_value, () => form.hero_badge_label_pt,
+        () => form.history_title_pt,
+        () => form.history_content_pt,
         () => form.history_youtube_url,
-        () => form.quality_title_pt, () => form.quality_title_en,
-        () => form.quality_subtitle_pt, () => form.quality_subtitle_en,
+        () => form.quality_title_pt,
+        () => form.quality_subtitle_pt,
         () => form.cta_section_name,
-        () => form.cta_title_pt, () => form.cta_title_en,
-        () => form.cta_subtitle_pt, () => form.cta_subtitle_en,
+        () => form.cta_title_pt,
+        () => form.cta_subtitle_pt,
     ],
     () => scheduleDraft()
 );
@@ -268,29 +259,16 @@ onUnmounted(() => clearTimeout(draftTimer));
                 <div class="rounded-2xl p-6 shadow-sm space-y-6" style="background-color: #fff;">
                     <h3 class="font-headline font-bold text-lg" style="color: #012d1d;">Seção Hero</h3>
 
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="field-label">Título (PT)</label>
-                            <input v-model="form.hero_title_pt" type="text" class="field-input" placeholder="Trataplan: A Estrutura da Inovação..." />
-                            <p v-if="form.errors.hero_title_pt" class="field-error">{{ form.errors.hero_title_pt }}</p>
-                        </div>
-                        <div>
-                            <label class="field-label">Título (EN)</label>
-                            <input v-model="form.hero_title_en" type="text" class="field-input" placeholder="Trataplan: The Structure of..." />
-                        </div>
+                    <div>
+                        <label class="field-label">Título</label>
+                        <input v-model="form.hero_title_pt" type="text" class="field-input" placeholder="Trataplan: A Estrutura da Inovação..." />
+                        <p v-if="form.errors.hero_title_pt" class="field-error">{{ form.errors.hero_title_pt }}</p>
                     </div>
 
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="field-label">Subtítulo (PT)</label>
-                            <textarea v-model="form.hero_subtitle_pt" class="field-input" rows="3"
-                                      placeholder="Há mais de uma década transformando madeira..."></textarea>
-                        </div>
-                        <div>
-                            <label class="field-label">Subtítulo (EN)</label>
-                            <textarea v-model="form.hero_subtitle_en" class="field-input" rows="3"
-                                      placeholder="For over a decade transforming wood..."></textarea>
-                        </div>
+                    <div>
+                        <label class="field-label">Subtítulo</label>
+                        <textarea v-model="form.hero_subtitle_pt" class="field-input" rows="3"
+                                  placeholder="Há mais de uma década transformando madeira..."></textarea>
                     </div>
 
                     <!-- Foto hero -->
@@ -321,18 +299,14 @@ onUnmounted(() => clearTimeout(draftTimer));
                         <p class="text-xs font-black uppercase tracking-widest mb-3" style="color: #854d0e; font-family: Manrope, sans-serif;">
                             Badge Amarela (flutuante sobre a foto)
                         </p>
-                        <div class="grid md:grid-cols-3 gap-4">
+                        <div class="grid md:grid-cols-2 gap-4">
                             <div>
                                 <label class="field-label">Valor</label>
                                 <input v-model="form.hero_badge_value" type="text" class="field-input" placeholder="+15" />
                             </div>
                             <div>
-                                <label class="field-label">Rótulo (PT)</label>
+                                <label class="field-label">Rótulo</label>
                                 <input v-model="form.hero_badge_label_pt" type="text" class="field-input" placeholder="Anos de mercado" />
-                            </div>
-                            <div>
-                                <label class="field-label">Rótulo (EN)</label>
-                                <input v-model="form.hero_badge_label_en" type="text" class="field-input" placeholder="Years in market" />
                             </div>
                         </div>
                     </div>
@@ -344,30 +318,16 @@ onUnmounted(() => clearTimeout(draftTimer));
                 <div class="rounded-2xl p-6 shadow-sm space-y-6" style="background-color: #fff;">
                     <h3 class="font-headline font-bold text-lg" style="color: #012d1d;">Seção Nossa História</h3>
 
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="field-label">Título (PT)</label>
-                            <input v-model="form.history_title_pt" type="text" class="field-input" placeholder="Raízes profundas no Oeste Catarinense" />
-                        </div>
-                        <div>
-                            <label class="field-label">Título (EN)</label>
-                            <input v-model="form.history_title_en" type="text" class="field-input" placeholder="Deep Roots in Western Santa Catarina" />
-                        </div>
+                    <div>
+                        <label class="field-label">Título</label>
+                        <input v-model="form.history_title_pt" type="text" class="field-input" placeholder="Raízes profundas no Oeste Catarinense" />
                     </div>
 
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="field-label">Descrição (PT)</label>
-                            <p class="text-xs mb-1" style="color: #9ca3af;">Use linha em branco para separar parágrafos.</p>
-                            <textarea v-model="form.history_content_pt" class="field-input font-mono" rows="6"
-                                      placeholder="A Trataplan nasceu&#10;&#10;Segundo parágrafo..."></textarea>
-                        </div>
-                        <div>
-                            <label class="field-label">Descrição (EN)</label>
-                            <p class="text-xs mb-1" style="color: #9ca3af;">Use blank line to separate paragraphs.</p>
-                            <textarea v-model="form.history_content_en" class="field-input font-mono" rows="6"
-                                      placeholder="Trataplan was born&#10;&#10;Second paragraph..."></textarea>
-                        </div>
+                    <div>
+                        <label class="field-label">Descrição</label>
+                        <p class="text-xs mb-1" style="color: #9ca3af;">Use linha em branco para separar parágrafos.</p>
+                        <textarea v-model="form.history_content_pt" class="field-input font-mono" rows="6"
+                                  placeholder="A Trataplan nasceu&#10;&#10;Segundo parágrafo..."></textarea>
                     </div>
 
                     <!-- Vídeo YouTube da seção Histórica -->
@@ -423,19 +383,15 @@ onUnmounted(() => clearTimeout(draftTimer));
                         </div>
                         <div class="space-y-3">
                             <div v-for="(item, i) in historyItems" :key="i"
-                                 class="grid grid-cols-[1fr,2fr,2fr,auto] gap-3 items-center p-3 rounded-xl"
+                                 class="grid grid-cols-[1fr,2fr,auto] gap-3 items-center p-3 rounded-xl"
                                  style="background-color: #f8f6f2;">
                                 <div>
                                     <label class="field-label text-[10px]">Valor</label>
                                     <input v-model="item.value" type="text" class="field-input text-sm" placeholder="+15" />
                                 </div>
                                 <div>
-                                    <label class="field-label text-[10px]">Rótulo PT</label>
+                                    <label class="field-label text-[10px]">Rótulo</label>
                                     <input v-model="item.label_pt" type="text" class="field-input text-sm" placeholder="Anos de mercado" />
-                                </div>
-                                <div>
-                                    <label class="field-label text-[10px]">Rótulo EN</label>
-                                    <input v-model="item.label_en" type="text" class="field-input text-sm" placeholder="Years in market" />
                                 </div>
                                 <button type="button" @click="removeHistoryItem(i)"
                                         class="mt-4 w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-red-50"
@@ -456,28 +412,15 @@ onUnmounted(() => clearTimeout(draftTimer));
                 <div class="rounded-2xl p-6 shadow-sm space-y-6" style="background-color: #fff;">
                     <h3 class="font-headline font-bold text-lg" style="color: #012d1d;">Seção Nossa Qualidade</h3>
 
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="field-label">Título (PT)</label>
-                            <input v-model="form.quality_title_pt" type="text" class="field-input" placeholder="Processo e Qualidade" />
-                        </div>
-                        <div>
-                            <label class="field-label">Título (EN)</label>
-                            <input v-model="form.quality_title_en" type="text" class="field-input" placeholder="Process and Quality" />
-                        </div>
+                    <div>
+                        <label class="field-label">Título</label>
+                        <input v-model="form.quality_title_pt" type="text" class="field-input" placeholder="Processo e Qualidade" />
                     </div>
 
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="field-label">Subtítulo (PT)</label>
-                            <textarea v-model="form.quality_subtitle_pt" class="field-input" rows="2"
-                                      placeholder="Cada etapa do nosso processo..."></textarea>
-                        </div>
-                        <div>
-                            <label class="field-label">Subtítulo (EN)</label>
-                            <textarea v-model="form.quality_subtitle_en" class="field-input" rows="2"
-                                      placeholder="Every step of our process..."></textarea>
-                        </div>
+                    <div>
+                        <label class="field-label">Subtítulo</label>
+                        <textarea v-model="form.quality_subtitle_pt" class="field-input" rows="2"
+                                  placeholder="Cada etapa do nosso processo..."></textarea>
                     </div>
 
                     <!-- Cards de qualidade -->
@@ -510,7 +453,7 @@ onUnmounted(() => clearTimeout(draftTimer));
                                     </button>
                                 </div>
 
-                                <div class="grid md:grid-cols-5 gap-3">
+                                <div class="grid md:grid-cols-3 gap-3">
                                     <div>
                                         <label class="field-label text-[10px]">Ícone Material</label>
                                         <div class="flex items-center gap-2">
@@ -524,20 +467,12 @@ onUnmounted(() => clearTimeout(draftTimer));
                                         </p>
                                     </div>
                                     <div>
-                                        <label class="field-label text-[10px]">Título PT</label>
+                                        <label class="field-label text-[10px]">Título</label>
                                         <input v-model="item.title_pt" type="text" class="field-input text-sm" placeholder="100% Reflorestamento" />
                                     </div>
                                     <div>
-                                        <label class="field-label text-[10px]">Título EN</label>
-                                        <input v-model="item.title_en" type="text" class="field-input text-sm" placeholder="100% Reforestation" />
-                                    </div>
-                                    <div class="md:col-span-1">
-                                        <label class="field-label text-[10px]">Descrição PT</label>
+                                        <label class="field-label text-[10px]">Descrição</label>
                                         <textarea v-model="item.desc_pt" class="field-input text-sm" rows="3"></textarea>
-                                    </div>
-                                    <div>
-                                        <label class="field-label text-[10px]">Descrição EN</label>
-                                        <textarea v-model="item.desc_en" class="field-input text-sm" rows="3"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -560,28 +495,15 @@ onUnmounted(() => clearTimeout(draftTimer));
                         <p class="text-xs mt-1" style="color: #9ca3af;">Apenas para identificação interna, não aparece no site.</p>
                     </div>
 
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="field-label">Título (PT)</label>
-                            <input v-model="form.cta_title_pt" type="text" class="field-input" placeholder="Madeira 100% de Reflorestamento." />
-                        </div>
-                        <div>
-                            <label class="field-label">Título (EN)</label>
-                            <input v-model="form.cta_title_en" type="text" class="field-input" placeholder="Wood 100% from Reforestation." />
-                        </div>
+                    <div>
+                        <label class="field-label">Título</label>
+                        <input v-model="form.cta_title_pt" type="text" class="field-input" placeholder="Madeira 100% de Reflorestamento." />
                     </div>
 
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="field-label">Subtítulo (PT)</label>
-                            <textarea v-model="form.cta_subtitle_pt" class="field-input" rows="3"
-                                      placeholder="Nosso compromisso com o planeta..."></textarea>
-                        </div>
-                        <div>
-                            <label class="field-label">Subtítulo (EN)</label>
-                            <textarea v-model="form.cta_subtitle_en" class="field-input" rows="3"
-                                      placeholder="Our commitment to the planet..."></textarea>
-                        </div>
+                    <div>
+                        <label class="field-label">Subtítulo</label>
+                        <textarea v-model="form.cta_subtitle_pt" class="field-input" rows="3"
+                                  placeholder="Nosso compromisso com o planeta..."></textarea>
                     </div>
 
                     <!-- Foto circular da CTA -->

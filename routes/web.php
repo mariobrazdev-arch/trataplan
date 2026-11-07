@@ -2,22 +2,23 @@
 
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PartnerController;
+use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\WorkforceController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Admin\AboutAdminController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\HeroAdminController;
 use App\Http\Controllers\Admin\PartnerAdminController;
 use App\Http\Controllers\Admin\PortfolioCategoryAdminController;
 use App\Http\Controllers\Admin\PortfolioServiceAdminController;
 use App\Http\Controllers\Admin\PostAdminController;
 use App\Http\Controllers\Admin\PostCategoryAdminController;
-use App\Http\Controllers\Admin\ProductCategoryAdminController;
 use App\Http\Controllers\Admin\ContactAdminController;
 use App\Http\Controllers\Admin\SettingsAdminController;
 use App\Http\Controllers\Admin\AnalyticsAdminController;
@@ -30,43 +31,38 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 // Redirects 301 para URLs antigas indexadas pelo Google
-Route::redirect('/produtos', '/catalogo', 301);
-Route::redirect('/en/products', '/en/catalog', 301);
+Route::redirect('/produtos', '/portfolio', 301);
+Route::redirect('/catalogo', '/portfolio', 301);
+
+// Site deixou de ser bilíngue — redirects 301 das antigas URLs /en/* (indexadas pelo Google) para a versão PT
+Route::redirect('/en', '/', 301);
+Route::redirect('/en/products', '/portfolio', 301);
+Route::redirect('/en/catalog', '/portfolio', 301);
+Route::redirect('/en/about', '/sobre', 301);
+Route::redirect('/en/portfolio', '/portfolio', 301);
+Route::redirect('/en/portfolio/{item}', '/portfolio/{item}', 301);
+Route::redirect('/en/mao-de-obra/{item}', '/mao-de-obra/{item}', 301);
+Route::redirect('/en/blog', '/blog', 301);
+Route::redirect('/en/blog/{slug}', '/blog/{slug}', 301);
+Route::redirect('/en/partners', '/parceiros', 301);
+Route::redirect('/en/contact', '/contato', 301);
 
 // English URLs sem prefixo /en/ que o Google indexou incorretamente
-Route::redirect('/contact', '/en/contact', 301);
-Route::redirect('/partners', '/en/partners', 301);
+Route::redirect('/contact', '/contato', 301);
+Route::redirect('/partners', '/parceiros', 301);
 
 Route::middleware(\App\Http\Middleware\SetPublicCacheHeaders::class)->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/sobre', [AboutController::class, 'show'])->name('about');
-    Route::get('/catalogo', [CatalogController::class, 'index'])->name('catalog');
-    Route::get('/catalogo/produto/{category}', [CatalogController::class, 'showProduct'])->name('catalog.product');
-    Route::get('/catalogo/servico/{service}', [CatalogController::class, 'showService'])->name('catalog.service');
+    Route::get('/portfolio', [PortfolioController::class, 'index'])->name('portfolio');
+    Route::get('/portfolio/{item}', [PortfolioController::class, 'show'])->name('portfolio.show');
+    Route::get('/mao-de-obra/{item}', [WorkforceController::class, 'show'])->name('workforce.show');
     Route::get('/blog', [PostController::class, 'index'])->name('blog');
     Route::get('/blog/{slug}', [PostController::class, 'show'])->name('blog.show');
     Route::get('/parceiros', [PartnerController::class, 'index'])->name('partners');
     Route::get('/contato', [ContactController::class, 'show'])->name('contact');
 });
 Route::post('/contato', [ContactController::class, 'store'])->name('contact.store')->middleware('throttle:contact');
-
-/*
-|--------------------------------------------------------------------------
-| Public routes — English (/en prefix)
-|--------------------------------------------------------------------------
-*/
-Route::middleware(\App\Http\Middleware\SetPublicCacheHeaders::class)->prefix('en')->name('en.')->group(function () {
-    Route::get('/', [HomeController::class, 'index'])->name('home');
-    Route::get('/about', [AboutController::class, 'show'])->name('about');
-    Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
-    Route::get('/catalog/product/{category}', [CatalogController::class, 'showProduct'])->name('catalog.product');
-    Route::get('/catalog/service/{service}', [CatalogController::class, 'showService'])->name('catalog.service');
-    Route::get('/blog', [PostController::class, 'index'])->name('blog');
-    Route::get('/blog/{slug}', [PostController::class, 'show'])->name('blog.show');
-    Route::get('/partners', [PartnerController::class, 'index'])->name('partners');
-    Route::get('/contact', [ContactController::class, 'show'])->name('contact');
-});
-Route::prefix('en')->name('en.')->post('/contact', [ContactController::class, 'store'])->name('contact.store')->middleware('throttle:contact');
 
 /*
 |--------------------------------------------------------------------------
@@ -139,12 +135,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/configuracoes', [SettingsAdminController::class, 'index'])->name('settings');
     Route::patch('/configuracoes', [SettingsAdminController::class, 'update'])->name('settings.update');
 
-    // Product Categories
-    Route::get('/produto-categorias', [ProductCategoryAdminController::class, 'index'])->name('product-categories.index');
-    Route::post('/produto-categorias', [ProductCategoryAdminController::class, 'store'])->name('product-categories.store');
-    Route::post('/produto-categorias/reorder', [ProductCategoryAdminController::class, 'reorder'])->name('product-categories.reorder');
-    Route::patch('/produto-categorias/{productCategory}', [ProductCategoryAdminController::class, 'update'])->name('product-categories.update');
-    Route::delete('/produto-categorias/{productCategory}', [ProductCategoryAdminController::class, 'destroy'])->name('product-categories.destroy');
+    // Heroes (banners da Home)
+    Route::get('/heroes', [HeroAdminController::class, 'index'])->name('heroes.index');
+    Route::get('/heroes/criar', [HeroAdminController::class, 'create'])->name('heroes.create');
+    Route::post('/heroes', [HeroAdminController::class, 'store'])->name('heroes.store');
+    Route::post('/heroes/reorder', [HeroAdminController::class, 'reorder'])->name('heroes.reorder');
+    Route::get('/heroes/{hero}/editar', [HeroAdminController::class, 'edit'])->name('heroes.edit');
+    Route::patch('/heroes/{hero}', [HeroAdminController::class, 'update'])->name('heroes.update');
+    Route::post('/heroes/{hero}/toggle', [HeroAdminController::class, 'toggleActive'])->name('heroes.toggle');
+    Route::delete('/heroes/fotos/{photo}', [HeroAdminController::class, 'destroyPhoto'])->name('heroes.destroyPhoto');
+    Route::delete('/heroes/{hero}', [HeroAdminController::class, 'destroy'])->name('heroes.destroy');
 
     // Portfolio — categories
     Route::get('/portfolio/categorias', [PortfolioCategoryAdminController::class, 'index'])->name('portfolio.categories.index');

@@ -257,45 +257,27 @@ async function remove(id) {
 
                         <!-- ── Hero ── -->
                         <template v-if="viewTab === 'hero'">
-                            <div class="view-pair">
-                                <div class="view-field"><span class="view-label">Título PT</span><p class="view-value">{{ viewing.hero_title_pt || '—' }}</p></div>
-                                <div class="view-field"><span class="view-label">Título EN</span><p class="view-value">{{ viewing.hero_title_en || '—' }}</p></div>
-                            </div>
-                            <div class="view-pair">
-                                <div class="view-field"><span class="view-label">Subtítulo PT</span><p class="view-value">{{ viewing.hero_subtitle_pt || '—' }}</p></div>
-                                <div class="view-field"><span class="view-label">Subtítulo EN</span><p class="view-value">{{ viewing.hero_subtitle_en || '—' }}</p></div>
-                            </div>
+                            <div class="view-field"><span class="view-label">Título</span><p class="view-value">{{ viewing.hero_title_pt || '—' }}</p></div>
+                            <div class="view-field"><span class="view-label">Subtítulo</span><p class="view-value">{{ viewing.hero_subtitle_pt || '—' }}</p></div>
                             <div v-if="viewing.hero_photo_url" class="view-field">
                                 <span class="view-label">Foto Hero</span>
                                 <img :src="viewing.hero_photo_url" class="mt-2 w-full h-40 object-cover rounded-xl" />
                             </div>
                             <div class="rounded-xl p-4" style="background-color: #fefce8; border: 1px solid #fef08a;">
                                 <p class="view-label mb-2">Badge Amarela</p>
-                                <div class="flex items-center gap-4">
-                                    <div style="background-color: #fbbf24; border-radius: 12px; padding: 12px 20px; display: inline-flex; flex-direction: column;">
-                                        <span class="font-black text-2xl leading-none" style="color: #012d1d; font-family: Manrope, sans-serif;">{{ viewing.hero_badge_value || '+15' }}</span>
-                                        <span class="text-xs font-bold uppercase tracking-widest mt-1" style="color: #012d1d; font-family: Manrope, sans-serif;">{{ viewing.hero_badge_label_pt || '—' }}</span>
-                                    </div>
-                                    <div class="text-sm" style="color: #6b7280;"><strong>PT:</strong> {{ viewing.hero_badge_label_pt || '—' }}<br><strong>EN:</strong> {{ viewing.hero_badge_label_en || '—' }}</div>
+                                <div style="background-color: #fbbf24; border-radius: 12px; padding: 12px 20px; display: inline-flex; flex-direction: column;">
+                                    <span class="font-black text-2xl leading-none" style="color: #012d1d; font-family: Manrope, sans-serif;">{{ viewing.hero_badge_value || '+15' }}</span>
+                                    <span class="text-xs font-bold uppercase tracking-widest mt-1" style="color: #012d1d; font-family: Manrope, sans-serif;">{{ viewing.hero_badge_label_pt || '—' }}</span>
                                 </div>
                             </div>
                         </template>
 
                         <!-- ── História ── -->
                         <template v-if="viewTab === 'history'">
-                            <div class="view-pair">
-                                <div class="view-field"><span class="view-label">Título PT</span><p class="view-value">{{ viewing.history_title_pt || '—' }}</p></div>
-                                <div class="view-field"><span class="view-label">Título EN</span><p class="view-value">{{ viewing.history_title_en || '—' }}</p></div>
-                            </div>
-                            <div class="view-pair">
-                                <div class="view-field">
-                                    <span class="view-label">Descrição PT</span>
-                                    <p class="view-value whitespace-pre-line">{{ viewing.history_content_pt || '—' }}</p>
-                                </div>
-                                <div class="view-field">
-                                    <span class="view-label">Descrição EN</span>
-                                    <p class="view-value whitespace-pre-line">{{ viewing.history_content_en || '—' }}</p>
-                                </div>
+                            <div class="view-field"><span class="view-label">Título</span><p class="view-value">{{ viewing.history_title_pt || '—' }}</p></div>
+                            <div class="view-field">
+                                <span class="view-label">Descrição</span>
+                                <p class="view-value whitespace-pre-line">{{ viewing.history_content_pt || '—' }}</p>
                             </div>
                             <div v-if="viewing.history_photo_url" class="view-field">
                                 <span class="view-label">Foto Histórica</span>
@@ -316,14 +298,8 @@ async function remove(id) {
 
                         <!-- ── Qualidade ── -->
                         <template v-if="viewTab === 'quality'">
-                            <div class="view-pair">
-                                <div class="view-field"><span class="view-label">Título PT</span><p class="view-value">{{ viewing.quality_title_pt || '—' }}</p></div>
-                                <div class="view-field"><span class="view-label">Título EN</span><p class="view-value">{{ viewing.quality_title_en || '—' }}</p></div>
-                            </div>
-                            <div class="view-pair">
-                                <div class="view-field"><span class="view-label">Subtítulo PT</span><p class="view-value">{{ viewing.quality_subtitle_pt || '—' }}</p></div>
-                                <div class="view-field"><span class="view-label">Subtítulo EN</span><p class="view-value">{{ viewing.quality_subtitle_en || '—' }}</p></div>
-                            </div>
+                            <div class="view-field"><span class="view-label">Título</span><p class="view-value">{{ viewing.quality_title_pt || '—' }}</p></div>
+                            <div class="view-field"><span class="view-label">Subtítulo</span><p class="view-value">{{ viewing.quality_subtitle_pt || '—' }}</p></div>
                             <div v-if="viewing.quality_items?.length" class="view-field">
                                 <span class="view-label">Cards ({{ viewing.quality_items.length }})</span>
                                 <div class="mt-2 space-y-3">
@@ -337,7 +313,6 @@ async function remove(id) {
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <p class="font-bold text-sm" style="color: #012d1d; font-family: Manrope, sans-serif;">{{ item.title_pt }}</p>
-                                            <p class="text-xs italic mb-1" style="color: #9ca3af;">EN: {{ item.title_en }}</p>
                                             <p class="text-xs leading-relaxed" style="color: #717973;">{{ item.desc_pt }}</p>
                                         </div>
                                     </div>
@@ -351,14 +326,8 @@ async function remove(id) {
                                 <span class="view-label">Nome interno da seção</span>
                                 <p class="view-value">{{ viewing.cta_section_name || '—' }}</p>
                             </div>
-                            <div class="view-pair">
-                                <div class="view-field"><span class="view-label">Título PT</span><p class="view-value">{{ viewing.cta_title_pt || '—' }}</p></div>
-                                <div class="view-field"><span class="view-label">Título EN</span><p class="view-value">{{ viewing.cta_title_en || '—' }}</p></div>
-                            </div>
-                            <div class="view-pair">
-                                <div class="view-field"><span class="view-label">Subtítulo PT</span><p class="view-value">{{ viewing.cta_subtitle_pt || '—' }}</p></div>
-                                <div class="view-field"><span class="view-label">Subtítulo EN</span><p class="view-value">{{ viewing.cta_subtitle_en || '—' }}</p></div>
-                            </div>
+                            <div class="view-field"><span class="view-label">Título</span><p class="view-value">{{ viewing.cta_title_pt || '—' }}</p></div>
+                            <div class="view-field"><span class="view-label">Subtítulo</span><p class="view-value">{{ viewing.cta_subtitle_pt || '—' }}</p></div>
                         </template>
                     </div>
 
@@ -384,7 +353,6 @@ async function remove(id) {
 </template>
 
 <style scoped>
-.view-pair  { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .view-field { display: flex; flex-direction: column; }
 .view-label {
     font-size: 0.6875rem;

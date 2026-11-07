@@ -9,22 +9,16 @@ defineOptions({ layout: null });
 const props = defineProps({ post: Object, postCategories: Array });
 
 const isEditing = computed(() => !!props.post);
-const activeTab = ref('pt');
 const seoOpen = ref(false);
 const previewImage = ref(props.post?.featured_image_url || null);
 
 const form = useForm({
     title_pt: props.post?.title_pt || '',
-    title_en: props.post?.title_en || '',
     slug: props.post?.slug || '',
     content_pt: props.post?.content_pt || '',
-    content_en: props.post?.content_en || '',
     excerpt_pt: props.post?.excerpt_pt || '',
-    excerpt_en: props.post?.excerpt_en || '',
     meta_title_pt: props.post?.meta_title_pt || '',
-    meta_title_en: props.post?.meta_title_en || '',
     meta_description_pt: props.post?.meta_description_pt || '',
-    meta_description_en: props.post?.meta_description_en || '',
     featured_image: null,
     new_photos: [],
     published_at: props.post?.published_at || '',
@@ -82,123 +76,52 @@ const isPublished = computed(() => !!form.published_at);
                 <!-- ── LEFT: Conteúdo ─────────────────────────── -->
                 <div class="lg:col-span-7 space-y-6">
 
-                    <!-- Language tabs + content card -->
+                    <!-- Content card -->
                     <div class="rounded-xl overflow-hidden" style="background-color: #ffffff;">
-
-                        <!-- Tab header -->
-                        <div class="flex items-center gap-1 px-6 pt-5 pb-0">
-                            <button type="button" @click="activeTab = 'pt'"
-                                class="px-5 py-2.5 rounded-t-lg font-label text-sm font-bold uppercase tracking-wide transition-all border-b-2"
-                                :style="activeTab === 'pt'
-                                    ? 'color: #012d1d; border-color: #012d1d; background-color: #f6f3ee;'
-                                    : 'color: #717973; border-color: transparent;'">
-                                Português
-                            </button>
-                            <button type="button" @click="activeTab = 'en'"
-                                class="px-5 py-2.5 rounded-t-lg font-label text-sm font-bold uppercase tracking-wide transition-all border-b-2"
-                                :style="activeTab === 'en'
-                                    ? 'color: #012d1d; border-color: #012d1d; background-color: #f6f3ee;'
-                                    : 'color: #717973; border-color: transparent;'">
-                                English
-                            </button>
-                        </div>
-
-                        <!-- Tab content -->
                         <div class="p-6 space-y-6" style="background-color: #f6f3ee;">
+                            <div class="space-y-2">
+                                <p class="font-label text-[10px] uppercase tracking-[0.2em] text-outline">Título do Serviço</p>
+                                <input v-model="form.title_pt" required type="text"
+                                    placeholder="Ex: Residência Pinheiros – Estrutura em Madeira"
+                                    class="w-full bg-transparent outline-none font-headline font-extrabold text-primary leading-tight transition-all"
+                                    style="font-size: 1.6rem; border: none; border-bottom: 2px solid #c1c8c2;"
+                                    @focus="$event.target.style.borderColor='#012d1d'"
+                                    @blur="$event.target.style.borderColor='#c1c8c2'"
+                                />
+                                <p v-if="form.errors.title_pt" class="text-xs text-red-500">{{ form.errors.title_pt }}</p>
+                            </div>
 
-                            <!-- PT tab -->
-                            <template v-if="activeTab === 'pt'">
-                                <div class="space-y-2">
-                                    <p class="font-label text-[10px] uppercase tracking-[0.2em] text-outline">Título do Serviço</p>
-                                    <input v-model="form.title_pt" required type="text"
-                                        placeholder="Ex: Residência Pinheiros – Estrutura em Madeira"
-                                        class="w-full bg-transparent outline-none font-headline font-extrabold text-primary leading-tight transition-all"
-                                        style="font-size: 1.6rem; border: none; border-bottom: 2px solid #c1c8c2;"
-                                        @focus="$event.target.style.borderColor='#012d1d'"
-                                        @blur="$event.target.style.borderColor='#c1c8c2'"
-                                    />
-                                    <p v-if="form.errors.title_pt" class="text-xs text-red-500">{{ form.errors.title_pt }}</p>
-                                </div>
+                            <div class="space-y-2">
+                                <p class="font-label text-[10px] uppercase tracking-[0.2em] text-outline">Resumo</p>
+                                <textarea v-model="form.excerpt_pt" rows="3"
+                                    placeholder="Uma breve visão geral do projeto, materiais utilizados e desafio arquitetônico..."
+                                    class="w-full bg-transparent outline-none font-body italic text-lg leading-relaxed resize-none"
+                                    style="border: none; border-bottom: 1px solid #c1c8c2; color: #414844;"
+                                ></textarea>
+                            </div>
 
-                                <div class="space-y-2">
-                                    <p class="font-label text-[10px] uppercase tracking-[0.2em] text-outline">Resumo</p>
-                                    <textarea v-model="form.excerpt_pt" rows="3"
-                                        placeholder="Uma breve visão geral do projeto, materiais utilizados e desafio arquitetônico..."
-                                        class="w-full bg-transparent outline-none font-body italic text-lg leading-relaxed resize-none"
-                                        style="border: none; border-bottom: 1px solid #c1c8c2; color: #414844;"
-                                    ></textarea>
-                                </div>
+                            <!-- Formatting toolbar (decorativo) -->
+                            <div class="flex items-center gap-1 py-2 border-y" style="border-color: #c1c8c2;">
+                                <button type="button" class="w-8 h-8 flex items-center justify-center rounded font-body font-bold text-sm hover:bg-white/60 transition-colors" style="color: #414844;"><b>B</b></button>
+                                <button type="button" class="w-8 h-8 flex items-center justify-center rounded font-body italic text-sm hover:bg-white/60 transition-colors" style="color: #414844;"><i>I</i></button>
+                                <button type="button" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/60 transition-colors" style="color: #414844;">
+                                    <span class="material-symbols-outlined text-base">format_list_bulleted</span>
+                                </button>
+                                <button type="button" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/60 transition-colors" style="color: #414844;">
+                                    <span class="material-symbols-outlined text-base">link</span>
+                                </button>
+                                <button type="button" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/60 transition-colors" style="color: #414844;">
+                                    <span class="material-symbols-outlined text-base">image</span>
+                                </button>
+                            </div>
 
-                                <!-- Formatting toolbar (decorativo) -->
-                                <div class="flex items-center gap-1 py-2 border-y" style="border-color: #c1c8c2;">
-                                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded font-body font-bold text-sm hover:bg-white/60 transition-colors" style="color: #414844;"><b>B</b></button>
-                                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded font-body italic text-sm hover:bg-white/60 transition-colors" style="color: #414844;"><i>I</i></button>
-                                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/60 transition-colors" style="color: #414844;">
-                                        <span class="material-symbols-outlined text-base">format_list_bulleted</span>
-                                    </button>
-                                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/60 transition-colors" style="color: #414844;">
-                                        <span class="material-symbols-outlined text-base">link</span>
-                                    </button>
-                                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/60 transition-colors" style="color: #414844;">
-                                        <span class="material-symbols-outlined text-base">image</span>
-                                    </button>
-                                </div>
-
-                                <div class="space-y-2">
-                                    <textarea v-model="form.content_pt" rows="14"
-                                        placeholder="Descreva o processo construtivo, as tecnologias sustentáveis aplicadas e o impacto visual desta obra..."
-                                        class="w-full bg-transparent outline-none font-body text-base leading-relaxed resize-y"
-                                        style="border: none; color: #1c1c19; min-height: 300px;"
-                                    ></textarea>
-                                </div>
-                            </template>
-
-                            <!-- EN tab -->
-                            <template v-else-if="activeTab === 'en'">
-                                <div class="space-y-2">
-                                    <p class="font-label text-[10px] uppercase tracking-[0.2em] text-outline">Service Title</p>
-                                    <input v-model="form.title_en" type="text"
-                                        placeholder="Ex: Pinheiros Residence – Timber Structure"
-                                        class="w-full bg-transparent outline-none font-headline font-extrabold text-primary leading-tight transition-all"
-                                        style="font-size: 1.6rem; border: none; border-bottom: 2px solid #c1c8c2;"
-                                        @focus="$event.target.style.borderColor='#012d1d'"
-                                        @blur="$event.target.style.borderColor='#c1c8c2'"
-                                    />
-                                    <p v-if="form.errors.title_en" class="text-xs text-red-500">{{ form.errors.title_en }}</p>
-                                </div>
-
-                                <div class="space-y-2">
-                                    <p class="font-label text-[10px] uppercase tracking-[0.2em] text-outline">Brief Summary</p>
-                                    <textarea v-model="form.excerpt_en" rows="3"
-                                        placeholder="A brief overview of the project, materials used and architectural challenge..."
-                                        class="w-full bg-transparent outline-none font-body italic text-lg leading-relaxed resize-none"
-                                        style="border: none; border-bottom: 1px solid #c1c8c2; color: #414844;"
-                                    ></textarea>
-                                </div>
-
-                                <!-- Formatting toolbar (decorativo) -->
-                                <div class="flex items-center gap-1 py-2 border-y" style="border-color: #c1c8c2;">
-                                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded font-body font-bold text-sm hover:bg-white/60 transition-colors" style="color: #414844;"><b>B</b></button>
-                                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded font-body italic text-sm hover:bg-white/60 transition-colors" style="color: #414844;"><i>I</i></button>
-                                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/60 transition-colors" style="color: #414844;">
-                                        <span class="material-symbols-outlined text-base">format_list_bulleted</span>
-                                    </button>
-                                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/60 transition-colors" style="color: #414844;">
-                                        <span class="material-symbols-outlined text-base">link</span>
-                                    </button>
-                                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/60 transition-colors" style="color: #414844;">
-                                        <span class="material-symbols-outlined text-base">image</span>
-                                    </button>
-                                </div>
-
-                                <div class="space-y-2">
-                                    <textarea v-model="form.content_en" rows="14"
-                                        placeholder="Describe the construction process, sustainable technologies applied and the visual impact of this project..."
-                                        class="w-full bg-transparent outline-none font-body text-base leading-relaxed resize-y"
-                                        style="border: none; color: #1c1c19; min-height: 300px;"
-                                    ></textarea>
-                                </div>
-                            </template>
+                            <div class="space-y-2">
+                                <textarea v-model="form.content_pt" rows="14"
+                                    placeholder="Descreva o processo construtivo, as tecnologias sustentáveis aplicadas e o impacto visual desta obra..."
+                                    class="w-full bg-transparent outline-none font-body text-base leading-relaxed resize-y"
+                                    style="border: none; color: #1c1c19; min-height: 300px;"
+                                ></textarea>
+                            </div>
                         </div>
                     </div>
 
@@ -219,35 +142,19 @@ const isPublished = computed(() => !!form.published_at);
                             enter-to-class="opacity-100 translate-y-0"
                         >
                             <div v-if="seoOpen" class="px-6 pb-6 pt-2 space-y-5" style="background-color: #f6f3ee;">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <div class="space-y-2">
-                                        <p class="font-label text-[10px] uppercase tracking-widest text-outline">Meta Título PT <span style="color:#c1c8c2;">(60 chars)</span></p>
-                                        <input v-model="form.meta_title_pt" maxlength="60" type="text"
-                                            class="w-full rounded-md p-4 font-body text-base outline-none focus:ring-2 focus:ring-primary-fixed-dim"
-                                            style="background-color: #ebe8e3; border: none;" />
-                                        <p class="text-[10px] font-label" style="color: #717973;">{{ form.meta_title_pt?.length || 0 }}/60</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <p class="font-label text-[10px] uppercase tracking-widest text-outline">Meta Title EN <span style="color:#c1c8c2;">(60 chars)</span></p>
-                                        <input v-model="form.meta_title_en" maxlength="60" type="text"
-                                            class="w-full rounded-md p-4 font-body text-base outline-none focus:ring-2 focus:ring-primary-fixed-dim"
-                                            style="background-color: #ebe8e3; border: none;" />
-                                        <p class="text-[10px] font-label" style="color: #717973;">{{ form.meta_title_en?.length || 0 }}/60</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <p class="font-label text-[10px] uppercase tracking-widest text-outline">Meta Descrição PT <span style="color:#c1c8c2;">(160 chars)</span></p>
-                                        <textarea v-model="form.meta_description_pt" maxlength="160" rows="3"
-                                            class="w-full rounded-md p-4 font-body text-base outline-none resize-none focus:ring-2 focus:ring-primary-fixed-dim"
-                                            style="background-color: #ebe8e3; border: none;"></textarea>
-                                        <p class="text-[10px] font-label" style="color: #717973;">{{ form.meta_description_pt?.length || 0 }}/160</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <p class="font-label text-[10px] uppercase tracking-widest text-outline">Meta Description EN <span style="color:#c1c8c2;">(160 chars)</span></p>
-                                        <textarea v-model="form.meta_description_en" maxlength="160" rows="3"
-                                            class="w-full rounded-md p-4 font-body text-base outline-none resize-none focus:ring-2 focus:ring-primary-fixed-dim"
-                                            style="background-color: #ebe8e3; border: none;"></textarea>
-                                        <p class="text-[10px] font-label" style="color: #717973;">{{ form.meta_description_en?.length || 0 }}/160</p>
-                                    </div>
+                                <div class="space-y-2">
+                                    <p class="font-label text-[10px] uppercase tracking-widest text-outline">Meta Título <span style="color:#c1c8c2;">(60 chars)</span></p>
+                                    <input v-model="form.meta_title_pt" maxlength="60" type="text"
+                                        class="w-full rounded-md p-4 font-body text-base outline-none focus:ring-2 focus:ring-primary-fixed-dim"
+                                        style="background-color: #ebe8e3; border: none;" />
+                                    <p class="text-[10px] font-label" style="color: #717973;">{{ form.meta_title_pt?.length || 0 }}/60</p>
+                                </div>
+                                <div class="space-y-2">
+                                    <p class="font-label text-[10px] uppercase tracking-widest text-outline">Meta Descrição <span style="color:#c1c8c2;">(160 chars)</span></p>
+                                    <textarea v-model="form.meta_description_pt" maxlength="160" rows="3"
+                                        class="w-full rounded-md p-4 font-body text-base outline-none resize-none focus:ring-2 focus:ring-primary-fixed-dim"
+                                        style="background-color: #ebe8e3; border: none;"></textarea>
+                                    <p class="text-[10px] font-label" style="color: #717973;">{{ form.meta_description_pt?.length || 0 }}/160</p>
                                 </div>
                             </div>
                         </Transition>
@@ -271,7 +178,7 @@ const isPublished = computed(() => !!form.published_at);
                                 style="background-color: #ebe8e3; border: none;">
                                 <option value="">— Sem categoria —</option>
                                 <option v-for="cat in postCategories" :key="cat.id" :value="cat.id">
-                                    {{ cat.name_pt }}{{ cat.name_en ? ` / ${cat.name_en}` : '' }}
+                                    {{ cat.name_pt }}
                                 </option>
                             </select>
                         </div>

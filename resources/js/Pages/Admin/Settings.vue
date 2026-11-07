@@ -33,14 +33,7 @@ const form = useForm({
     instagram_url:      props.settings?.instagram_url || '',
     linkedin_url:       props.settings?.linkedin_url || '',
     company_tagline_pt: props.settings?.company_tagline_pt || '',
-    company_tagline_en: props.settings?.company_tagline_en || '',
     footer_text_pt:     props.settings?.footer_text_pt || '',
-    footer_text_en:     props.settings?.footer_text_en || '',
-    banner_title_pt:    props.settings?.banner_title_pt || '',
-    banner_title_en:    props.settings?.banner_title_en || '',
-    banner_subtitle_pt: props.settings?.banner_subtitle_pt || '',
-    banner_subtitle_en: props.settings?.banner_subtitle_en || '',
-    banner_image:       null,
     logo_transparent:   null,
     logo_white_bg:      null,
     // SMTP
@@ -55,7 +48,6 @@ const form = useForm({
 
 const previewTransparent = ref(null);
 const previewWhiteBg = ref(null);
-const previewBannerImage = ref(null);
 
 function onLogoTransparent(e) {
     const file = e.target.files[0];
@@ -69,21 +61,12 @@ function onLogoWhiteBg(e) {
     form.logo_white_bg = file;
     previewWhiteBg.value = URL.createObjectURL(file);
 }
-function onBannerImage(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    form.banner_image = file;
-    previewBannerImage.value = URL.createObjectURL(file);
-}
 
 const currentLogoTransparentUrl = computed(() =>
     previewTransparent.value ?? props.settings?.logo_transparent_url ?? null
 );
 const currentLogoWhiteBgUrl = computed(() =>
     previewWhiteBg.value ?? props.settings?.logo_white_bg_url ?? null
-);
-const currentBannerImageUrl = computed(() =>
-    previewBannerImage.value ?? props.settings?.banner_image_url ?? null
 );
 
 function submit() {
@@ -93,7 +76,6 @@ function submit() {
         const data = { ...d, _method: 'PATCH' };
         if (!d.logo_transparent) delete data.logo_transparent;
         if (!d.logo_white_bg) delete data.logo_white_bg;
-        if (!d.banner_image) delete data.banner_image;
         return data;
     }).post('/admin/configuracoes', { forceFormData: true });
 }
@@ -110,7 +92,6 @@ function scheduleAutoSave() {
             const data = { ...d, _method: 'PATCH' };
             delete data.logo_transparent;
             delete data.logo_white_bg;
-            delete data.banner_image;
             return data;
         }).post('/admin/configuracoes', {
             forceFormData: true,
@@ -127,10 +108,8 @@ function scheduleAutoSave() {
 
 watch(
     [
-        () => form.banner_title_pt,    () => form.banner_title_en,
-        () => form.banner_subtitle_pt, () => form.banner_subtitle_en,
-        () => form.company_tagline_pt, () => form.company_tagline_en,
-        () => form.footer_text_pt,     () => form.footer_text_en,
+        () => form.company_tagline_pt,
+        () => form.footer_text_pt,
         () => form.facebook_url,       () => form.instagram_url, () => form.linkedin_url,
         () => form.mail_from_address,  () => form.mail_from_name,
         () => form.mail_host,          () => form.mail_port,
@@ -184,88 +163,39 @@ onUnmounted(() => clearTimeout(autoSaveTimer));
                     <p class="font-label text-[10px] uppercase tracking-[0.2em] text-outline">Identidade Visual</p>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
-                    <!-- Logos -->
-                    <div class="px-6 pb-6 space-y-5">
-                        <!-- Logo transparente -->
-                        <div>
-                            <p class="font-label text-[10px] uppercase tracking-widest mb-1" style="color: #77574d;">Logotipo Principal (Light)</p>
-                            <p class="font-body italic text-xs mb-3" style="color: #717973;">PNG, SVG — para o header escuro / fundos escuros.</p>
-                            <label class="flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all group"
-                                style="background-color: #1c1c19; border: 2px dashed #444; min-height: 120px; padding: 1rem;">
-                                <img v-if="currentLogoTransparentUrl" :src="currentLogoTransparentUrl"
-                                    alt="Logo" class="max-h-20 object-contain mb-2 group-hover:opacity-80 transition-opacity" />
-                                <span v-else class="material-symbols-outlined text-3xl mb-1" style="color: #555;">upload</span>
-                                <span class="text-xs font-label mt-1" style="color: #666;">
-                                    {{ form.logo_transparent ? form.logo_transparent.name : (currentLogoTransparentUrl ? 'Clique para trocar' : 'Clique para enviar') }}
-                                </span>
-                                <input type="file" class="hidden" accept="image/png,image/svg+xml,image/webp" @change="onLogoTransparent" />
-                            </label>
-                            <p v-if="form.errors.logo_transparent" class="text-xs mt-1 text-red-500">{{ form.errors.logo_transparent }}</p>
-                        </div>
-
-                        <!-- Logo fundo branco -->
-                        <div>
-                            <p class="font-label text-[10px] uppercase tracking-widest mb-1" style="color: #77574d;">Logotipo Secundário (Dark)</p>
-                            <p class="font-body italic text-xs mb-3" style="color: #717973;">PNG, JPG — para o footer e fundos claros.</p>
-                            <label class="flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all group"
-                                style="background-color: #ebe8e3; border: 2px dashed #c1c8c2; min-height: 120px; padding: 1rem;">
-                                <img v-if="currentLogoWhiteBgUrl" :src="currentLogoWhiteBgUrl"
-                                    alt="Logo" class="max-h-20 object-contain mb-2 group-hover:opacity-70 transition-opacity" />
-                                <span v-else class="material-symbols-outlined text-3xl mb-1" style="color: #aaa;">upload</span>
-                                <span class="text-xs font-label mt-1" style="color: #aaa;">
-                                    {{ form.logo_white_bg ? form.logo_white_bg.name : (currentLogoWhiteBgUrl ? 'Clique para trocar' : 'Clique para enviar') }}
-                                </span>
-                                <input type="file" class="hidden" accept="image/png,image/jpeg,image/webp" @change="onLogoWhiteBg" />
-                            </label>
-                            <p v-if="form.errors.logo_white_bg" class="text-xs mt-1 text-red-500">{{ form.errors.logo_white_bg }}</p>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 px-6 pb-6">
+                    <!-- Logo transparente -->
+                    <div>
+                        <p class="font-label text-[10px] uppercase tracking-widest mb-1" style="color: #77574d;">Logotipo Principal (Light)</p>
+                        <p class="font-body italic text-xs mb-3" style="color: #717973;">PNG, SVG — para o header escuro / fundos escuros.</p>
+                        <label class="flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all group"
+                            style="background-color: #1c1c19; border: 2px dashed #444; min-height: 120px; padding: 1rem;">
+                            <img v-if="currentLogoTransparentUrl" :src="currentLogoTransparentUrl"
+                                alt="Logo" class="max-h-20 object-contain mb-2 group-hover:opacity-80 transition-opacity" />
+                            <span v-else class="material-symbols-outlined text-3xl mb-1" style="color: #555;">upload</span>
+                            <span class="text-xs font-label mt-1" style="color: #666;">
+                                {{ form.logo_transparent ? form.logo_transparent.name : (currentLogoTransparentUrl ? 'Clique para trocar' : 'Clique para enviar') }}
+                            </span>
+                            <input type="file" class="hidden" accept="image/png,image/svg+xml,image/webp" @change="onLogoTransparent" />
+                        </label>
+                        <p v-if="form.errors.logo_transparent" class="text-xs mt-1 text-red-500">{{ form.errors.logo_transparent }}</p>
                     </div>
 
-                    <!-- Banner -->
-                    <div class="px-6 pb-6 space-y-5" style="border-left: 1px solid #e0ddd8;">
-                        <div>
-                            <p class="font-label text-[10px] uppercase tracking-widest mb-1" style="color: #77574d;">Banner Principal (Hero)</p>
-                            <p class="font-body italic text-xs mb-3" style="color: #717973;">PNG, JPG ou WebP — recomendado 1920×800px. Máx. 5MB.</p>
-                            <label class="relative flex flex-col items-center justify-center rounded-xl cursor-pointer overflow-hidden group"
-                                style="background-color: #1c1c19; border: 2px dashed #444; min-height: 140px;">
-                                <img v-if="currentBannerImageUrl" :src="currentBannerImageUrl"
-                                    alt="Banner" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" />
-                                <div class="relative z-10 flex flex-col items-center gap-1">
-                                    <span class="material-symbols-outlined text-3xl" style="color: #fff;">photo_library</span>
-                                    <span class="text-xs font-label" style="color: #ddd;">
-                                        {{ form.banner_image ? form.banner_image.name : (currentBannerImageUrl ? 'Clique para substituir' : 'Clique para enviar') }}
-                                    </span>
-                                </div>
-                                <input type="file" class="hidden" accept="image/png,image/jpeg,image/webp" @change="onBannerImage" />
-                            </label>
-                            <p v-if="form.errors.banner_image" class="text-xs mt-1 text-red-500">{{ form.errors.banner_image }}</p>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <p class="font-label text-[10px] uppercase tracking-widest mb-1.5" style="color: #77574d;">Título PT</p>
-                                <input v-model="form.banner_title_pt" type="text" class="w-full rounded-md p-3 font-body text-sm outline-none"
-                                    style="background-color: #ebe8e3; border: none;" />
-                            </div>
-                            <div>
-                                <p class="font-label text-[10px] uppercase tracking-widest mb-1.5" style="color: #77574d;">Title EN</p>
-                                <input v-model="form.banner_title_en" type="text" class="w-full rounded-md p-3 font-body text-sm outline-none"
-                                    style="background-color: #ebe8e3; border: none;" />
-                            </div>
-                            <div>
-                                <p class="font-label text-[10px] uppercase tracking-widest mb-1.5" style="color: #77574d;">Subtítulo PT</p>
-                                <textarea v-model="form.banner_subtitle_pt" rows="2"
-                                    class="w-full rounded-md p-3 font-body italic text-sm outline-none resize-none"
-                                    style="background-color: #ebe8e3; border: none;"></textarea>
-                            </div>
-                            <div>
-                                <p class="font-label text-[10px] uppercase tracking-widest mb-1.5" style="color: #77574d;">Subtitle EN</p>
-                                <textarea v-model="form.banner_subtitle_en" rows="2"
-                                    class="w-full rounded-md p-3 font-body italic text-sm outline-none resize-none"
-                                    style="background-color: #ebe8e3; border: none;"></textarea>
-                            </div>
-                        </div>
+                    <!-- Logo fundo branco -->
+                    <div>
+                        <p class="font-label text-[10px] uppercase tracking-widest mb-1" style="color: #77574d;">Logotipo Secundário (Dark)</p>
+                        <p class="font-body italic text-xs mb-3" style="color: #717973;">PNG, JPG — para o footer e fundos claros.</p>
+                        <label class="flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all group"
+                            style="background-color: #ebe8e3; border: 2px dashed #c1c8c2; min-height: 120px; padding: 1rem;">
+                            <img v-if="currentLogoWhiteBgUrl" :src="currentLogoWhiteBgUrl"
+                                alt="Logo" class="max-h-20 object-contain mb-2 group-hover:opacity-70 transition-opacity" />
+                            <span v-else class="material-symbols-outlined text-3xl mb-1" style="color: #aaa;">upload</span>
+                            <span class="text-xs font-label mt-1" style="color: #aaa;">
+                                {{ form.logo_white_bg ? form.logo_white_bg.name : (currentLogoWhiteBgUrl ? 'Clique para trocar' : 'Clique para enviar') }}
+                            </span>
+                            <input type="file" class="hidden" accept="image/png,image/jpeg,image/webp" @change="onLogoWhiteBg" />
+                        </label>
+                        <p v-if="form.errors.logo_white_bg" class="text-xs mt-1 text-red-500">{{ form.errors.logo_white_bg }}</p>
                     </div>
                 </div>
             </section>
@@ -460,26 +390,14 @@ onUnmounted(() => clearTimeout(autoSaveTimer));
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="space-y-1.5">
-                        <p class="font-label text-[10px] uppercase tracking-widest" style="color: #77574d;">Tagline Principal (Home) PT</p>
+                        <p class="font-label text-[10px] uppercase tracking-widest" style="color: #77574d;">Tagline Principal (Home)</p>
                         <input v-model="form.company_tagline_pt" type="text"
                             class="w-full rounded-md p-3 font-body text-sm outline-none"
                             style="background-color: #ebe8e3; border: none;" />
                     </div>
                     <div class="space-y-1.5">
-                        <p class="font-label text-[10px] uppercase tracking-widest" style="color: #77574d;">Tagline Principal (Home) EN</p>
-                        <input v-model="form.company_tagline_en" type="text"
-                            class="w-full rounded-md p-3 font-body text-sm outline-none"
-                            style="background-color: #ebe8e3; border: none;" />
-                    </div>
-                    <div class="space-y-1.5">
-                        <p class="font-label text-[10px] uppercase tracking-widest" style="color: #77574d;">Footer Text (Português)</p>
+                        <p class="font-label text-[10px] uppercase tracking-widest" style="color: #77574d;">Texto do Rodapé</p>
                         <textarea v-model="form.footer_text_pt" rows="3"
-                            class="w-full rounded-md p-3 font-body italic text-sm outline-none resize-none"
-                            style="background-color: #ebe8e3; border: none;"></textarea>
-                    </div>
-                    <div class="space-y-1.5">
-                        <p class="font-label text-[10px] uppercase tracking-widest" style="color: #77574d;">Footer Text (English)</p>
-                        <textarea v-model="form.footer_text_en" rows="3"
                             class="w-full rounded-md p-3 font-body italic text-sm outline-none resize-none"
                             style="background-color: #ebe8e3; border: none;"></textarea>
                     </div>

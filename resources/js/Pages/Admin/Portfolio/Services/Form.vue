@@ -11,9 +11,7 @@ const isEditing = computed(() => !!props.service);
 
 const form = useForm({
     name_pt:         props.service?.name_pt || '',
-    name_en:         props.service?.name_en || '',
     description_pt:  props.service?.description_pt || '',
-    description_en:  props.service?.description_en || '',
     cover_photo:     null,
     order:           props.service?.order ?? 0,
     is_active:       props.service?.is_active ?? true,
@@ -82,44 +80,24 @@ const coverSrc = computed(() => coverPreview.value || props.service?.cover_url |
                         </h3>
 
                         <div class="space-y-6">
-                            <!-- Nomes -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div class="space-y-2">
-                                    <label class="font-label text-[10px] uppercase tracking-widest text-outline block">Nome (PT) *</label>
-                                    <input v-model="form.name_pt" required type="text"
-                                        placeholder="Ex: Montagem de Estruturas"
-                                        class="w-full rounded-md p-4 font-body text-lg outline-none transition-all focus:ring-2 focus:ring-primary-fixed-dim"
-                                        style="background-color: #ebe8e3; border: none;" />
-                                    <p v-if="form.errors.name_pt" class="text-xs text-red-500">{{ form.errors.name_pt }}</p>
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="font-label text-[10px] uppercase tracking-widest text-outline block">Nome (EN) *</label>
-                                    <input v-model="form.name_en" required type="text"
-                                        placeholder="Ex: Structure Assembly"
-                                        class="w-full rounded-md p-4 font-body text-lg outline-none transition-all focus:ring-2 focus:ring-primary-fixed-dim"
-                                        style="background-color: #ebe8e3; border: none;" />
-                                    <p v-if="form.errors.name_en" class="text-xs text-red-500">{{ form.errors.name_en }}</p>
-                                </div>
+                            <!-- Nome -->
+                            <div class="space-y-2">
+                                <label class="font-label text-[10px] uppercase tracking-widest text-outline block">Nome *</label>
+                                <input v-model="form.name_pt" required type="text"
+                                    placeholder="Ex: Montagem de Estruturas"
+                                    class="w-full rounded-md p-4 font-body text-lg outline-none transition-all focus:ring-2 focus:ring-primary-fixed-dim"
+                                    style="background-color: #ebe8e3; border: none;" />
+                                <p v-if="form.errors.name_pt" class="text-xs text-red-500">{{ form.errors.name_pt }}</p>
                             </div>
 
-                            <!-- Descrição PT -->
+                            <!-- Descrição -->
                             <div class="space-y-2">
-                                <label class="font-label text-[10px] uppercase tracking-widest text-outline block">Descrição (PT)</label>
+                                <label class="font-label text-[10px] uppercase tracking-widest text-outline block">Descrição</label>
                                 <textarea v-model="form.description_pt" rows="4"
                                     placeholder="Descreva os detalhes técnicos do serviço..."
                                     class="w-full rounded-md p-4 font-body text-lg leading-relaxed outline-none resize-none transition-all focus:ring-2 focus:ring-primary-fixed-dim"
                                     style="background-color: #ebe8e3; border: none;"></textarea>
                                 <p v-if="form.errors.description_pt" class="text-xs text-red-500">{{ form.errors.description_pt }}</p>
-                            </div>
-
-                            <!-- Descrição EN -->
-                            <div class="space-y-2">
-                                <label class="font-label text-[10px] uppercase tracking-widest text-outline block">Descrição (EN)</label>
-                                <textarea v-model="form.description_en" rows="4"
-                                    placeholder="Describe the technical details of the service..."
-                                    class="w-full rounded-md p-4 font-body text-lg leading-relaxed outline-none resize-none transition-all focus:ring-2 focus:ring-primary-fixed-dim"
-                                    style="background-color: #ebe8e3; border: none;"></textarea>
-                                <p v-if="form.errors.description_en" class="text-xs text-red-500">{{ form.errors.description_en }}</p>
                             </div>
 
                             <!-- Ordem + Toggle -->
@@ -147,14 +125,10 @@ const coverSrc = computed(() => coverPreview.value || props.service?.cover_url |
                     </div>
 
                     <!-- Info cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="rounded-xl p-5" style="background-color: #f6f3ee;">
                             <p class="font-label text-[9px] uppercase tracking-[0.2em] text-outline mb-2">Padrão Editorial</p>
                             <p class="font-body italic text-sm leading-relaxed" style="color: #414844;">Cada serviço é exibido automaticamente na seção de Mão de Obra da landing page.</p>
-                        </div>
-                        <div class="rounded-xl p-5" style="background-color: #f6f3ee;">
-                            <p class="font-label text-[9px] uppercase tracking-[0.2em] text-outline mb-2">Otimização Bilíngue</p>
-                            <p class="font-body italic text-sm leading-relaxed" style="color: #414844;">Preencha os dois idiomas para garantir a exibição correta em todas as versões do site.</p>
                         </div>
                         <div class="rounded-xl p-5" style="background-color: #f6f3ee;">
                             <p class="font-label text-[9px] uppercase tracking-[0.2em] text-outline mb-2">Controle de Ordem</p>

@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\ProductCategory;
+use App\Models\PortfolioCategory;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -47,16 +47,14 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'ziggy' => fn () => [...(new Ziggy)->toArray(), 'location' => $request->url()],
-            'catalog_footer' => function () {
-                $locale = App::getLocale();
-                $prefix = $locale === 'en' ? '/en' : '';
-                $catalogBase = $prefix . ($locale === 'en' ? '/catalog' : '/catalogo');
-
-                return ProductCategory::orderBy('name_pt')
-                    ->get(['id', 'name_pt', 'name_en'])
-                    ->map(fn ($c) => [
-                        'label' => $locale === 'en' ? ($c->name_en ?: $c->name_pt) : $c->name_pt,
-                        'href'  => $catalogBase,
+            'portfolio_footer' => function () {
+                return PortfolioCategory::active()
+                    ->orderBy('name_pt')
+                    ->take(6)
+                    ->get(['id', 'name_pt'])
+                    ->map(fn ($item) => [
+                        'label' => $item->name_pt,
+                        'href'  => "/portfolio/{$item->id}",
                     ])
                     ->values();
             },

@@ -1,12 +1,9 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import LocaleSwitcher from '@/Components/Shared/LocaleSwitcher.vue';
-import { useLocale } from '@/composables/useLocale';
 import { useSettings } from '@/composables/useSettings';
 import { useWhatsAppPicker } from '@/composables/useWhatsAppPicker';
 
-const { locale, t } = useLocale();
 const { logoTransparentUrl, logoWhiteBgUrl } = useSettings();
 const { open } = useWhatsAppPicker();
 const mobileOpen = ref(false);
@@ -14,20 +11,17 @@ const mobileOpen = ref(false);
 // Para fundo branco usa logo_white_bg; fallback para transparent
 const logoUrl = computed(() => logoWhiteBgUrl.value || logoTransparentUrl.value);
 
-const navLinks = computed(() => {
-    const prefix = locale.value === 'en' ? '/en' : '';
-    return [
-        { label: t('Início', 'Home'),        href: prefix + '/' },
-        { label: t('Sobre', 'About'),        href: prefix + (locale.value === 'en' ? '/about'   : '/sobre') },
-        { label: t('Catálogo', 'Catalog'),   href: prefix + (locale.value === 'en' ? '/catalog' : '/catalogo') },
-        { label: 'Blog',                     href: prefix + '/blog' },
-        { label: t('Contato', 'Contact'),    href: prefix + (locale.value === 'en' ? '/contact' : '/contato') },
-    ];
-});
+const navLinks = [
+    { label: 'Início',    href: '/' },
+    { label: 'Sobre',     href: '/sobre' },
+    { label: 'Portfólio', href: '/portfolio' },
+    { label: 'Blog',      href: '/blog' },
+    { label: 'Contato',   href: '/contato' },
+];
 
 function isActive(href) {
     const path = window.location.pathname;
-    if (href === '/' || href === '/en/') return path === href || path === '/en';
+    if (href === '/') return path === href;
     return path.startsWith(href);
 }
 </script>
@@ -42,7 +36,7 @@ function isActive(href) {
             <div class="flex justify-between items-center px-6 py-3 max-w-7xl mx-auto">
 
                 <!-- Logo -->
-                <Link :href="locale === 'en' ? '/en' : '/'" class="flex items-center gap-2.5 shrink-0">
+                <Link href="/" class="flex items-center gap-2.5 shrink-0">
                     <img
                         v-if="logoUrl"
                         :src="logoUrl"
@@ -80,9 +74,8 @@ function isActive(href) {
                     </Link>
                 </div>
 
-                <!-- Right: locale + CTA -->
+                <!-- Right: CTA -->
                 <div class="hidden md:flex items-center gap-3">
-                    <LocaleSwitcher />
                     <button
                         type="button"
                         @click="open()"
@@ -136,8 +129,7 @@ function isActive(href) {
                         <span v-if="isActive(link.href)" class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                     </Link>
 
-                    <div class="flex items-center justify-between pt-3 mt-2 border-t" style="border-color: #022c2215;">
-                        <LocaleSwitcher />
+                    <div class="pt-3 mt-2 border-t" style="border-color: #022c2215;">
                         <button
                             type="button"
                             @click="open()"

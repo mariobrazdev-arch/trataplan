@@ -2,11 +2,9 @@
 import { computed } from 'vue';
 import { useSettings } from '@/composables/useSettings';
 import { useWhatsAppPicker } from '@/composables/useWhatsAppPicker';
-import { useLocale } from '@/composables/useLocale';
 
 const { companyUnits, whatsappNumber } = useSettings();
 const { state, close } = useWhatsAppPicker();
-const { t } = useLocale();
 
 const units = computed(() => {
     const list = companyUnits.value.filter(u => u.whatsapp);
@@ -54,10 +52,10 @@ function pick(unit) {
                             <div>
                                 <h3 class="font-black text-base leading-tight"
                                     style="font-family: Manrope, sans-serif; color: #012d1d;">
-                                    {{ t('Fale pelo WhatsApp', 'Chat on WhatsApp') }}
+                                    Fale pelo WhatsApp
                                 </h3>
                                 <p class="text-xs mt-0.5" style="color: #6b7280; font-family: Manrope, sans-serif;">
-                                    {{ t('Escolha uma unidade:', 'Choose a unit:') }}
+                                    Escolha uma unidade:
                                 </p>
                             </div>
                         </div>
@@ -106,7 +104,7 @@ function pick(unit) {
 
                     <!-- Footer note -->
                     <p class="px-5 pb-4 text-center text-xs" style="color: #9ca3af; font-family: Manrope, sans-serif;">
-                        {{ t('Você será redirecionado para o WhatsApp', 'You will be redirected to WhatsApp') }}
+                        Você será redirecionado para o WhatsApp
                     </p>
                 </div>
             </div>

@@ -2,13 +2,11 @@
 import SeoHead from '@/Components/Shared/SeoHead.vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
-import { useLocale } from '@/composables/useLocale';
 import { useSettings } from '@/composables/useSettings';
 import { useWhatsAppPicker } from '@/composables/useWhatsAppPicker';
 
 const props = defineProps({ seo: Object });
 
-const { locale, t } = useLocale();
 const { telegramLink, setting, companyUnits, logoTransparentUrl } = useSettings();
 const { open: openWhatsApp } = useWhatsAppPicker();
 const page    = usePage();
@@ -42,14 +40,38 @@ function mapsDirectionsUrl(address) {
     return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(address);
 }
 
+// Formata número de WhatsApp cru (ex: "554999600329") como "+55 (49) 99960-0329"
+function formatWhatsApp(raw) {
+    const digits = String(raw ?? '').replace(/\D/g, '');
+    if (!digits) return '';
+
+    let country = '';
+    let rest = digits;
+    if (digits.length > 11 && digits.startsWith('55')) {
+        country = '+55 ';
+        rest = digits.slice(2);
+    }
+
+    const ddd = rest.slice(0, 2);
+    const number = rest.slice(2);
+
+    if (number.length === 9) {
+        return `${country}(${ddd}) ${number.slice(0, 5)}-${number.slice(5)}`;
+    }
+    if (number.length === 8) {
+        return `${country}(${ddd}) ${number.slice(0, 4)}-${number.slice(4)}`;
+    }
+    return raw;
+}
+
 // ── Formulário ───────────────────────────────────────────────────────────────
 const projectTypes = computed(() => [
-    { value: '',                 label: t('Selecione um interesse...', 'Select an interest...') },
-    { value: 'decks-pergolados', label: t('Decks & Pergolados',        'Decks & Pergolas') },
-    { value: 'construcao-civil', label: t('Construção Civil',           'Civil Construction') },
-    { value: 'cercas-currais',   label: t('Cercas e Currais',           'Fences & Pens') },
-    { value: 'paisagismo',       label: t('Paisagismo',                 'Landscaping') },
-    { value: 'outro',            label: t('Outro / Dúvida geral',       'Other / General question') },
+    { value: '',                 label: 'Selecione um interesse...' },
+    { value: 'decks-pergolados', label: 'Decks & Pergolados' },
+    { value: 'construcao-civil', label: 'Construção Civil' },
+    { value: 'cercas-currais',   label: 'Cercas e Currais' },
+    { value: 'paisagismo',       label: 'Paisagismo' },
+    { value: 'outro',            label: 'Outro / Dúvida geral' },
 ]);
 
 const form = useForm({ name: '', email: '', phone: '', subject: '', message: '', unit_email: '', unit_name: '', website: '' });
@@ -87,7 +109,7 @@ function submit() {
         form.unit_email = defaultUnitEmail.value;
         form.unit_name  = defaultUnitName.value;
     }
-    const action = locale.value === 'en' ? '/en/contact' : '/contato';
+    const action = '/contato';
     form.post(action, { onSuccess: () => form.reset() });
 }
 
@@ -95,7 +117,7 @@ function submitBudget() {
     if (!budgetForm.unit_email && defaultBudgetUnitEmail.value) {
         budgetForm.unit_email = defaultBudgetUnitEmail.value;
     }
-    const action = locale.value === 'en' ? '/en/contact' : '/contato';
+    const action = '/contato';
     budgetForm.post(action, {
         onSuccess: () => {
             budgetForm.reset();
@@ -123,7 +145,7 @@ function fieldStyle(hasError) {
             <div class="mb-10">
                 <span class="inline-block text-xs font-black uppercase tracking-[0.3em]"
                       style="color: #fbbf24; font-family: Manrope, sans-serif; background-color: rgba(251,191,36,0.12); padding: 4px 12px; border-radius: 99px;">
-                    {{ t('Fale Conosco', 'Contact Us') }}
+                    {{ 'Fale Conosco' }}
                 </span>
             </div>
 
@@ -133,13 +155,10 @@ function fieldStyle(hasError) {
                 <div>
                     <h1 class="font-headline font-extrabold leading-[1.05] tracking-tight mb-4"
                         style="font-size: clamp(2.5rem, 5vw, 4rem); color: #012d1d;">
-                        {{ t('Entre em Contato.', 'Get in Touch.') }}
+                        {{ 'Entre em Contato.' }}
                     </h1>
                     <p class="text-lg mb-10 max-w-lg" style="color: #717973; font-family: Newsreader, serif; font-style: italic;">
-                        {{ t(
-                            'Da estrutura ao acabamento, estamos prontos para discutir o seu próximo projeto de madeira tratada.',
-                            'From structure to finish, we\'re ready to discuss your next treated wood project.'
-                        ) }}
+                        {{ 'Da estrutura ao acabamento, estamos prontos para discutir o seu próximo projeto de madeira tratada.' }}
                     </p>
 
                     <!-- Sucesso -->
@@ -150,10 +169,10 @@ function fieldStyle(hasError) {
                               style="color: #012d1d; font-variation-settings: 'FILL' 1;">check_circle</span>
                         <div>
                             <p class="font-bold text-base" style="color: #012d1d; font-family: Manrope, sans-serif;">
-                                {{ t('Mensagem enviada!', 'Message sent!') }}
+                                {{ 'Mensagem enviada!' }}
                             </p>
                             <p class="text-sm mt-1" style="color: #2d5a40; font-family: Newsreader, serif;">
-                                {{ t('Retornaremos em breve pelo e-mail informado.', 'We\'ll get back to you soon at the provided email.') }}
+                                {{ 'Retornaremos em breve pelo e-mail informado.' }}
                             </p>
                         </div>
                     </div>
@@ -166,10 +185,10 @@ function fieldStyle(hasError) {
                               style="color: #b45309; font-variation-settings: 'FILL' 1;">warning</span>
                         <div>
                             <p class="font-bold text-base" style="color: #78350f; font-family: Manrope, sans-serif;">
-                                {{ t('Mensagem recebida, mas houve um problema no envio do e-mail.', 'Message received, but there was an issue sending the email.') }}
+                                {{ 'Mensagem recebida, mas houve um problema no envio do e-mail.' }}
                             </p>
                             <p class="text-sm mt-1" style="color: #92400e; font-family: Newsreader, serif;">
-                                {{ t('Sua mensagem foi salva com sucesso. Nossa equipe irá visualizá-la em breve. Se preferir, entre em contato pelo WhatsApp.', 'Your message was saved successfully. Our team will view it shortly. If you prefer, contact us via WhatsApp.') }}
+                                {{ 'Sua mensagem foi salva com sucesso. Nossa equipe irá visualizá-la em breve. Se preferir, entre em contato pelo WhatsApp.' }}
                             </p>
                         </div>
                     </div>
@@ -186,12 +205,12 @@ function fieldStyle(hasError) {
                         <div>
                             <label class="block text-xs font-black uppercase tracking-widest mb-2"
                                    style="font-family: Manrope, sans-serif; color: #9a8b7a;">
-                                {{ t('Seu Nome', 'Your Name') }} <span style="color:#ba1a1a;">*</span>
+                                {{ 'Seu Nome' }} <span style="color:#ba1a1a;">*</span>
                             </label>
                             <input v-model="form.name" type="text"
                                 class="w-full px-5 py-4 rounded-xl outline-none transition-all focus:ring-2"
                                 :style="fieldStyle(form.errors.name)"
-                                :placeholder="t('Nome completo', 'Full name')" />
+                                :placeholder="'Nome completo'" />
                             <p v-if="form.errors.name" class="mt-1.5 text-xs font-semibold" style="color: #ba1a1a;">{{ form.errors.name }}</p>
                         </div>
 
@@ -211,7 +230,7 @@ function fieldStyle(hasError) {
                             <div>
                                 <label class="block text-xs font-black uppercase tracking-widest mb-2"
                                        style="font-family: Manrope, sans-serif; color: #9a8b7a;">
-                                    {{ t('Telefone', 'Phone') }}
+                                    {{ 'Telefone' }}
                                 </label>
                                 <input v-model="form.phone" type="tel"
                                     class="w-full px-5 py-4 rounded-xl outline-none transition-all focus:ring-2"
@@ -225,7 +244,7 @@ function fieldStyle(hasError) {
                         <div v-if="units.length > 1">
                             <label class="block text-xs font-black uppercase tracking-widest mb-2"
                                    style="font-family: Manrope, sans-serif; color: #9a8b7a;">
-                                {{ t('Unidade de Atendimento', 'Service Unit') }} <span style="color:#ba1a1a;">*</span>
+                                {{ 'Unidade de Atendimento' }} <span style="color:#ba1a1a;">*</span>
                             </label>
                             <div class="relative">
                                 <select v-model="form.unit_email"
@@ -234,7 +253,7 @@ function fieldStyle(hasError) {
                                     style="font-family: Manrope, sans-serif; font-size: 0.95rem; color: #1c1c19;"
                                     @change="e => { const u = units.find(u => u.email === e.target.value); form.unit_name = u?.label || ''; }">
                                     <option v-for="(unit, i) in units" :key="i" :value="unit.email || ''">
-                                        {{ unit.label || (unit.tipo === 'matriz' ? t('Matriz (Sede)', 'Headquarters') : t('Filial', 'Branch')) }}
+                                        {{ unit.label || (unit.tipo === 'matriz' ? 'Matriz (Sede)' : 'Filial') }}
                                         {{ unit.address ? ' — ' + unit.address.split(',')[0] : '' }}
                                     </option>
                                 </select>
@@ -247,7 +266,7 @@ function fieldStyle(hasError) {
                         <div>
                             <label class="block text-xs font-black uppercase tracking-widest mb-2"
                                    style="font-family: Manrope, sans-serif; color: #9a8b7a;">
-                                {{ t('Tipo de Projeto', 'Project Type') }}
+                                {{ 'Tipo de Projeto' }}
                             </label>
                             <div class="relative">
                                 <select v-model="form.subject"
@@ -266,12 +285,12 @@ function fieldStyle(hasError) {
                         <div>
                             <label class="block text-xs font-black uppercase tracking-widest mb-2"
                                    style="font-family: Manrope, sans-serif; color: #9a8b7a;">
-                                {{ t('Mensagem', 'Message') }} <span style="color:#ba1a1a;">*</span>
+                                {{ 'Mensagem' }} <span style="color:#ba1a1a;">*</span>
                             </label>
                             <textarea v-model="form.message" rows="5"
                                 class="w-full px-5 py-4 rounded-xl outline-none resize-none transition-all focus:ring-2"
                                 :style="fieldStyle(form.errors.message)"
-                                :placeholder="t('Descreva seu projeto ou dúvida em detalhes...', 'Describe your project or question in detail...')">
+                                :placeholder="'Descreva seu projeto ou dúvida em detalhes...'">
                             </textarea>
                             <p v-if="form.errors.message" class="mt-1.5 text-xs font-semibold" style="color: #ba1a1a;">{{ form.errors.message }}</p>
                         </div>
@@ -281,7 +300,7 @@ function fieldStyle(hasError) {
                             class="group flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
                             style="background-color: #012d1d; font-family: Manrope, sans-serif;">
                             <span v-if="form.processing" class="material-symbols-outlined text-base animate-spin">autorenew</span>
-                            {{ form.processing ? t('Enviando...', 'Sending...') : t('Enviar Mensagem', 'Send Message') }}
+                            {{ form.processing ? 'Enviando...' : 'Enviar Mensagem' }}
                             <span v-if="!form.processing" class="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">arrow_forward</span>
                         </button>
                     </form>
@@ -296,7 +315,7 @@ function fieldStyle(hasError) {
                             class="flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all"
                             style="font-family: Manrope, sans-serif;"
                             :style="activeUnitTab === i ? 'background-color: #012d1d; color: white;' : 'color: #717973;'">
-                            {{ unit.label || (unit.tipo === 'matriz' ? t('Matriz','HQ') : t('Filial','Branch')) }}
+                            {{ unit.label || (unit.tipo === 'matriz' ? 'Matriz' : 'Filial') }}
                         </button>
                     </div>
 
@@ -307,7 +326,7 @@ function fieldStyle(hasError) {
                                 <span class="material-symbols-outlined text-base" style="color: #012d1d;">location_on</span>
                             </div>
                             <div>
-                                <p class="text-xs font-black uppercase tracking-widest mb-1" style="color: #9a8b7a; font-family: Manrope, sans-serif;">{{ t('Endereço', 'Address') }}</p>
+                                <p class="text-xs font-black uppercase tracking-widest mb-1" style="color: #9a8b7a; font-family: Manrope, sans-serif;">{{ 'Endereço' }}</p>
                                 <p class="text-sm leading-snug" style="color: #1c1c19; font-family: Newsreader, serif;">{{ activeUnit.address }}</p>
                             </div>
                         </div>
@@ -316,7 +335,7 @@ function fieldStyle(hasError) {
                                 <span class="material-symbols-outlined text-base" style="color: #012d1d;">call</span>
                             </div>
                             <div>
-                                <p class="text-xs font-black uppercase tracking-widest mb-1" style="color: #9a8b7a; font-family: Manrope, sans-serif;">{{ t('Telefone', 'Phone') }}</p>
+                                <p class="text-xs font-black uppercase tracking-widest mb-1" style="color: #9a8b7a; font-family: Manrope, sans-serif;">{{ 'Telefone' }}</p>
                                 <a :href="`tel:${activeUnit.phone.replace(/\D/g,'')}`" class="text-sm font-semibold hover:underline" style="color: #012d1d; font-family: Manrope, sans-serif;">{{ activeUnit.phone }}</a>
                             </div>
                         </div>
@@ -335,7 +354,7 @@ function fieldStyle(hasError) {
                             </div>
                             <div>
                                 <p class="text-xs font-black uppercase tracking-widest mb-1" style="color: #9a8b7a; font-family: Manrope, sans-serif;">WhatsApp</p>
-                                <a :href="`https://wa.me/${activeUnit.whatsapp}`" target="_blank" rel="noopener" class="text-sm font-semibold hover:underline" style="color: #012d1d; font-family: Manrope, sans-serif;">{{ activeUnit.whatsapp }}</a>
+                                <a :href="`https://wa.me/${activeUnit.whatsapp}`" target="_blank" rel="noopener" class="text-sm font-semibold hover:underline" style="color: #012d1d; font-family: Manrope, sans-serif;">{{ formatWhatsApp(activeUnit.whatsapp) }}</a>
                             </div>
                         </div>
                     </div>
@@ -368,11 +387,11 @@ function fieldStyle(hasError) {
             <div class="mb-8">
                 <span class="text-xs font-black uppercase tracking-[0.3em] mb-4 block"
                       style="color: rgba(251,191,36,0.7); font-family: Manrope, sans-serif;">
-                    {{ t('Presença física', 'Physical presence') }}
+                    {{ 'Presença física' }}
                 </span>
                 <h2 class="text-white font-headline font-extrabold leading-tight"
                     style="font-size: clamp(2rem, 4vw, 3.25rem);">
-                    {{ t('Visite Nossas Unidades.', 'Visit Our Units.') }}
+                    {{ 'Visite Nossas Unidades.' }}
                 </h2>
             </div>
 
@@ -384,7 +403,7 @@ function fieldStyle(hasError) {
                     :style="activeMapTab === i ? 'background-color: #fbbf24; color: #012d1d;' : 'color: rgba(255,255,255,0.5);'">
                     <span class="w-2 h-2 rounded-full inline-block"
                           :style="activeMapTab === i ? 'background:#012d1d;' : 'background:rgba(255,255,255,0.3);'"></span>
-                    {{ unit.label || (unit.tipo === 'matriz' ? t('Matriz (Sede)','Headquarters') : t('Filial','Branch')) }}
+                    {{ unit.label || (unit.tipo === 'matriz' ? 'Matriz (Sede)' : 'Filial') }}
                 </button>
             </div>
 
@@ -403,7 +422,7 @@ function fieldStyle(hasError) {
                         </template>
                         <span class="text-[10px] font-black uppercase tracking-[0.25em] px-3 py-1 rounded-full mb-1"
                               style="background-color: rgba(251,191,36,0.18); color: #fbbf24; font-family: Manrope, sans-serif;">
-                            {{ activeMapUnit?.tipo === 'matriz' ? t('MATRIZ','HQ') : t('FILIAL','BRANCH') }}
+                            {{ activeMapUnit?.tipo === 'matriz' ? 'MATRIZ' : 'FILIAL' }}
                         </span>
                         <p class="text-sm text-white/60 font-semibold mt-1" style="font-family: Manrope, sans-serif;">
                             {{ activeMapUnit?.label }}
@@ -418,7 +437,7 @@ function fieldStyle(hasError) {
                         <div v-if="activeMapUnit?.address" class="flex items-start gap-3">
                             <span class="material-symbols-outlined text-amber-400/70 text-sm mt-0.5 shrink-0">location_on</span>
                             <div>
-                                <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color: rgba(255,255,255,0.3); font-family: Manrope, sans-serif;">{{ t('Endereço','Address') }}</p>
+                                <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color: rgba(255,255,255,0.3); font-family: Manrope, sans-serif;">{{ 'Endereço' }}</p>
                                 <p class="text-xs leading-relaxed text-white/65" style="font-family: Newsreader, serif;">{{ activeMapUnit.address }}</p>
                             </div>
                         </div>
@@ -428,14 +447,14 @@ function fieldStyle(hasError) {
                                 <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color: rgba(255,255,255,0.3); font-family: Manrope, sans-serif;">WhatsApp</p>
                                 <a :href="`https://wa.me/${activeMapUnit.whatsapp}`" target="_blank" rel="noopener"
                                    class="text-xs text-white/65 hover:text-white transition-colors" style="font-family: Manrope, sans-serif;">
-                                    {{ activeMapUnit.whatsapp }}
+                                    {{ formatWhatsApp(activeMapUnit.whatsapp) }}
                                 </a>
                             </div>
                         </div>
                         <div v-else-if="activeMapUnit?.phone" class="flex items-start gap-3">
                             <span class="material-symbols-outlined text-amber-400/70 text-sm mt-0.5 shrink-0">call</span>
                             <div>
-                                <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color: rgba(255,255,255,0.3); font-family: Manrope, sans-serif;">{{ t('Telefone','Phone') }}</p>
+                                <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color: rgba(255,255,255,0.3); font-family: Manrope, sans-serif;">{{ 'Telefone' }}</p>
                                 <a :href="`tel:${activeMapUnit.phone.replace(/\D/g,'')}`"
                                    class="text-xs text-white/65 hover:text-white transition-colors" style="font-family: Manrope, sans-serif;">
                                     {{ activeMapUnit.phone }}
@@ -462,7 +481,7 @@ function fieldStyle(hasError) {
                             <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                             </svg>
-                            {{ t('Falar pelo WhatsApp', 'Chat on WhatsApp') }}
+                            {{ 'Falar pelo WhatsApp' }}
                         </button>
                     </div>
                 </div>
@@ -486,7 +505,7 @@ function fieldStyle(hasError) {
                              style="background: rgba(255,255,255,0.04);">
                             <span class="material-symbols-outlined text-4xl" style="color: rgba(255,255,255,0.2);">map</span>
                             <p class="text-[10px] font-bold uppercase tracking-widest" style="color: rgba(255,255,255,0.25); font-family: Manrope, sans-serif;">
-                                {{ t('Configure o link do mapa nas configurações', 'Configure the map link in settings') }}
+                                {{ 'Configure o link do mapa nas configurações' }}
                             </p>
                         </div>
                         <!-- Botão "Abrir no Maps" -->
@@ -496,14 +515,14 @@ function fieldStyle(hasError) {
                            class="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:opacity-90"
                            style="background: white; color: #012d1d; font-family: Manrope, sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
                             <span class="material-symbols-outlined text-sm leading-none">open_in_new</span>
-                            {{ t('Abrir no Maps', 'Open in Maps') }}
+                            {{ 'Abrir no Maps' }}
                         </a>
                     </div>
 
                     <!-- Formulário de Orçamento -->
                     <div class="rounded-2xl p-7" style="background-color: #fcf9f4;">
                         <h3 class="font-headline font-extrabold text-xl mb-5" style="color: #012d1d;">
-                            {{ t('Solicite um Orçamento', 'Request a Quote') }}
+                            {{ 'Solicite um Orçamento' }}
                         </h3>
 
                         <!-- Sucesso -->
@@ -513,7 +532,7 @@ function fieldStyle(hasError) {
                             <span class="material-symbols-outlined text-xl shrink-0"
                                   style="color: #012d1d; font-variation-settings:'FILL' 1;">check_circle</span>
                             <p class="text-sm font-bold" style="color: #012d1d; font-family: Manrope, sans-serif;">
-                                {{ t('Orçamento solicitado com sucesso!', 'Quote requested successfully!') }}
+                                {{ 'Orçamento solicitado com sucesso!' }}
                             </p>
                         </div>
 
@@ -528,7 +547,7 @@ function fieldStyle(hasError) {
                             <div v-if="units.length > 1">
                                 <label class="block text-xs font-black uppercase tracking-widest mb-2"
                                        style="font-family: Manrope, sans-serif; color: #9a8b7a;">
-                                    {{ t('Unidade de Atendimento', 'Service Unit') }}
+                                    {{ 'Unidade de Atendimento' }}
                                 </label>
                                 <div class="relative">
                                     <select v-model="budgetForm.unit_email"
@@ -537,7 +556,7 @@ function fieldStyle(hasError) {
                                         style="font-family: Manrope, sans-serif; font-size: 0.9rem; color: #1c1c19;"
                                         @change="e => { const u = units.find(u => u.email === e.target.value); budgetForm.unit_name = u?.label || ''; }">
                                         <option v-for="(unit, i) in units" :key="i" :value="unit.email || ''">
-                                            {{ unit.label || (unit.tipo === 'matriz' ? t('Matriz (Sede)', 'Headquarters') : t('Filial', 'Branch')) }}
+                                            {{ unit.label || (unit.tipo === 'matriz' ? 'Matriz (Sede)' : 'Filial') }}
                                             {{ unit.address ? ' — ' + unit.address.split(',')[0] : '' }}
                                         </option>
                                     </select>
@@ -552,7 +571,7 @@ function fieldStyle(hasError) {
                                     <input v-model="budgetForm.name" type="text"
                                         class="w-full px-4 py-3.5 rounded-xl outline-none transition-all focus:ring-2"
                                         :style="fieldStyle(budgetForm.errors.name)"
-                                        :placeholder="t('Seu Nome', 'Your Name')" />
+                                        :placeholder="'Seu Nome'" />
                                     <p v-if="budgetForm.errors.name" class="mt-1 text-xs font-semibold" style="color:#ba1a1a;">{{ budgetForm.errors.name }}</p>
                                 </div>
                                 <div>
@@ -569,7 +588,7 @@ function fieldStyle(hasError) {
                                 <textarea v-model="budgetForm.message" rows="4"
                                     class="w-full px-4 py-3.5 rounded-xl outline-none resize-none transition-all focus:ring-2"
                                     :style="fieldStyle(budgetForm.errors.message)"
-                                    :placeholder="t('Fale sobre seu projeto...', 'Tell us about your project...')">
+                                    :placeholder="'Fale sobre seu projeto...'">
                                 </textarea>
                                 <p v-if="budgetForm.errors.message" class="mt-1 text-xs font-semibold" style="color:#ba1a1a;">{{ budgetForm.errors.message }}</p>
                             </div>
@@ -579,7 +598,7 @@ function fieldStyle(hasError) {
                                 class="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-black text-sm uppercase tracking-widest text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
                                 style="background-color: #012d1d; font-family: Manrope, sans-serif; letter-spacing: 0.1em;">
                                 <span v-if="budgetForm.processing" class="material-symbols-outlined text-base animate-spin">autorenew</span>
-                                {{ budgetForm.processing ? t('Enviando...', 'Sending...') : t('Enviar Mensagem', 'Send Message') }}
+                                {{ budgetForm.processing ? 'Enviando...' : 'Enviar Mensagem' }}
                             </button>
                         </form>
                     </div>

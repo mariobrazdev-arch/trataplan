@@ -2,7 +2,6 @@
 import { ref, computed } from 'vue';
 import SeoHead from '@/Components/Shared/SeoHead.vue';
 import { Link } from '@inertiajs/vue3';
-import { useLocale } from '@/composables/useLocale';
 import { useSettings } from '@/composables/useSettings';
 import { useWhatsAppPicker } from '@/composables/useWhatsAppPicker';
 
@@ -11,62 +10,46 @@ const props = defineProps({
     seo: Object,
 });
 
-const { locale, t } = useLocale();
 const { setting } = useSettings();
 const { open: openWhatsApp } = useWhatsAppPicker();
 
 // ── Defaults estáticos (fallback quando não há versão ativa) ─────────────────
 const DEFAULTS = {
     hero_title_pt:        'Trataplan: A Estrutura da Inovação Sustentável.',
-    hero_title_en:        'Trataplan: The Structure of Sustainable Innovation.',
     hero_subtitle_pt:     'Há mais de uma década transformando madeira em durabilidade, no coração do Oeste Catarinense.',
-    hero_subtitle_en:     'For over a decade transforming wood into durability, in the heart of Western Santa Catarina.',
     hero_photo_url:       '/images/defaults/about-hero.jpg',
     hero_badge_value:     '+15',
     hero_badge_label_pt:  'Anos de mercado',
-    hero_badge_label_en:  'Years in market',
     history_title_pt:     'Raízes profundas no Oeste Catarinense',
-    history_title_en:     'Deep Roots in Western Santa Catarina',
     history_content_pt:   'A Trataplan nasceu da visão de oferecer madeira tratada de alta qualidade para o mercado do Oeste Catarinense e de toda a região Sul do Brasil. Nossa missão é entregar durabilidade com responsabilidade ambiental.\n\nUtilizamos exclusivamente madeiras de reflorestamento — Pinus e Eucalipto — tratadas pelo processo de autoclave vácuo-pressão, o mais eficaz para garantir resistência a cupins, fungos e intempéries por décadas.',
-    history_content_en:   'Trataplan was born from the vision of offering high-quality treated wood to the market of Western Santa Catarina and throughout Southern Brazil. Our mission is to deliver durability with environmental responsibility.\n\nWe use exclusively reforestation wood — Pine and Eucalyptus — treated by the vacuum-pressure autoclave process, the most effective for ensuring resistance to termites, fungi and weathering for decades.',
     history_photo_url:    '/images/defaults/about-history.jpg',
     history_youtube_url:  null,
     history_items: [
-        { value: '15+',  label_pt: 'Anos',           label_en: 'Years' },
-        { value: '100%', label_pt: 'Reflorestamento', label_en: 'Reforestation' },
-        { value: 'SC',   label_pt: 'Santa Catarina',  label_en: 'Santa Catarina' },
+        { value: '15+',  label_pt: 'Anos' },
+        { value: '100%', label_pt: 'Reflorestamento' },
+        { value: 'SC',   label_pt: 'Santa Catarina' },
     ],
     quality_title_pt:     'Processo e Qualidade',
-    quality_title_en:     'Process and Quality',
     quality_subtitle_pt:  'Cada etapa do nosso processo é pensada para entregar a máxima durabilidade e segurança.',
-    quality_subtitle_en:  'Every step of our process is designed to deliver maximum durability and safety.',
     quality_items: [
         {
             icon:     'park',
             title_pt: '100% Reflorestamento',
-            title_en: '100% Reforestation',
             desc_pt:  'Trabalhamos exclusivamente com Eucalipto e Pinus oriundos de florestas plantadas e manejadas de forma sustentável.',
-            desc_en:  'We work exclusively with Eucalyptus and Pine from sustainably managed planted forests.',
         },
         {
             icon:     'precision_manufacturing',
             title_pt: 'Autoclave Vácuo-Pressão',
-            title_en: 'Vacuum-Pressure Autoclave',
             desc_pt:  'O processo de impregnação sob alta pressão garante penetração total do preservativo em cada fibra da madeira.',
-            desc_en:  'The high-pressure impregnation process ensures total preservative penetration into every wood fiber.',
         },
         {
             icon:     'verified_user',
             title_pt: 'Garantia de 15 Anos',
-            title_en: '15-Year Guarantee',
             desc_pt:  'Confiança respaldada por certificação e pelo compromisso com a qualidade que só a experiência pode oferecer.',
-            desc_en:  'Confidence backed by certification and the commitment to quality that only experience can offer.',
         },
     ],
     cta_title_pt:    'Madeira 100% de Reflorestamento.',
-    cta_title_en:    'Wood 100% from Reforestation.',
     cta_subtitle_pt: 'Nosso compromisso com o planeta é tão sólido quanto a madeira que produzimos. Cada peça vendida representa uma árvore de floresta plantada.',
-    cta_subtitle_en: 'Our commitment to the planet is as solid as the wood we produce. Each piece sold represents a tree from a planted forest.',
     cta_photo_url:   '/images/defaults/about-hero.jpg',
 };
 
@@ -78,29 +61,20 @@ function merge(key) {
 
 const data = computed(() => ({
     hero_title_pt:        merge('hero_title_pt'),
-    hero_title_en:        merge('hero_title_en'),
     hero_subtitle_pt:     merge('hero_subtitle_pt'),
-    hero_subtitle_en:     merge('hero_subtitle_en'),
     hero_photo_url:       merge('hero_photo_url'),
     hero_badge_value:     merge('hero_badge_value'),
     hero_badge_label_pt:  merge('hero_badge_label_pt'),
-    hero_badge_label_en:  merge('hero_badge_label_en'),
     history_title_pt:     merge('history_title_pt'),
-    history_title_en:     merge('history_title_en'),
     history_content_pt:   merge('history_content_pt'),
-    history_content_en:   merge('history_content_en'),
     history_photo_url:    merge('history_photo_url'),
     history_youtube_url:  merge('history_youtube_url'),
     history_items:        merge('history_items'),
     quality_title_pt:     merge('quality_title_pt'),
-    quality_title_en:     merge('quality_title_en'),
     quality_subtitle_pt:  merge('quality_subtitle_pt'),
-    quality_subtitle_en:  merge('quality_subtitle_en'),
     quality_items:        merge('quality_items'),
     cta_title_pt:         merge('cta_title_pt'),
-    cta_title_en:         merge('cta_title_en'),
     cta_subtitle_pt:      merge('cta_subtitle_pt'),
-    cta_subtitle_en:      merge('cta_subtitle_en'),
     cta_photo_url:        merge('cta_photo_url'),
 }));
 
@@ -165,13 +139,13 @@ function prevQuality() {
             <div>
                 <span class="inline-block text-xs font-black uppercase tracking-[0.3em] mb-6"
                       style="color: #fbbf24; font-family: Manrope, sans-serif;">
-                    {{ t('Sobre a Empresa', 'About the Company') }}
+                    Sobre a Empresa
                 </span>
                 <h1 class="text-white font-headline font-extrabold text-3xl md:text-5xl lg:text-6xl leading-[1.05] tracking-tight mb-8">
-                    {{ locale === 'en' ? data.hero_title_en : data.hero_title_pt }}
+                    {{ data.hero_title_pt }}
                 </h1>
                 <p class="text-lg leading-relaxed mb-10" style="color: rgba(255,255,255,0.6); font-family: Newsreader, serif; font-style: italic;">
-                    {{ locale === 'en' ? data.hero_subtitle_en : data.hero_subtitle_pt }}
+                    {{ data.hero_subtitle_pt }}
                 </p>
                 <button type="button" @click="openWhatsApp()"
                    class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95 hover:opacity-90"
@@ -179,7 +153,7 @@ function prevQuality() {
                     <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                     </svg>
-                    {{ t('Falar com a equipe', 'Talk to our team') }}
+                    Falar com a equipe
                 </button>
             </div>
 
@@ -187,7 +161,7 @@ function prevQuality() {
                 <div class="relative rounded-2xl overflow-hidden shadow-2xl h-64 md:h-[420px]">
                     <img
                         :src="data.hero_photo_url"
-                        :alt="t('Floresta de pinus – Trataplan', 'Pine forest – Trataplan')"
+                        alt="Floresta de pinus – Trataplan"
                         class="w-full h-full object-cover"
                     />
                     <div class="absolute inset-0" style="background: linear-gradient(135deg, rgba(1,45,29,0.3) 0%, transparent 60%);"></div>
@@ -198,7 +172,7 @@ function prevQuality() {
                         {{ data.hero_badge_value }}
                     </p>
                     <p class="text-xs font-bold uppercase tracking-widest mt-1" style="color: #012d1d; font-family: Manrope, sans-serif;">
-                        {{ locale === 'en' ? data.hero_badge_label_en : data.hero_badge_label_pt }}
+                        {{ data.hero_badge_label_pt }}
                     </p>
                 </div>
             </div>
@@ -223,7 +197,7 @@ function prevQuality() {
                                 frameborder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowfullscreen
-                                :title="t('Vídeo Trataplan', 'Trataplan Video')"
+                                title="Vídeo Trataplan"
                             ></iframe>
                         </div>
                         <!-- Vídeo normal: container landscape -->
@@ -235,7 +209,7 @@ function prevQuality() {
                                 frameborder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowfullscreen
-                                :title="t('Vídeo Trataplan', 'Trataplan Video')"
+                                title="Vídeo Trataplan"
                             ></iframe>
                         </div>
                     </div>
@@ -243,7 +217,7 @@ function prevQuality() {
                     <div v-else>
                         <img
                             :src="data.history_photo_url"
-                            :alt="t('Madeira tratada – Trataplan', 'Treated wood – Trataplan')"
+                            alt="Madeira tratada – Trataplan"
                             class="w-full rounded-2xl shadow-xl object-cover h-64 md:h-[420px]"
                         />
                         <div class="absolute bottom-6 right-6 rounded-xl px-5 py-4 shadow-lg"
@@ -256,14 +230,14 @@ function prevQuality() {
                 <div>
                     <span class="text-xs font-black uppercase tracking-[0.3em] mb-4 block"
                           style="color: #fbbf24; font-family: Manrope, sans-serif;">
-                        {{ t('Nossa História', 'Our History') }}
+                        Nossa História
                     </span>
                     <h2 class="font-headline font-extrabold text-4xl mb-6 leading-tight" style="color: #012d1d;">
-                        {{ locale === 'en' ? data.history_title_en : data.history_title_pt }}
+                        {{ data.history_title_pt }}
                     </h2>
 
                     <div class="space-y-4 text-lg leading-relaxed" style="color: #4a5568; font-family: Newsreader, serif;">
-                        <p v-for="(paragraph, i) in (locale === 'en' ? data.history_content_en : data.history_content_pt).split('\n\n')" :key="i">
+                        <p v-for="(paragraph, i) in data.history_content_pt.split('\n\n')" :key="i">
                             {{ paragraph }}
                         </p>
                     </div>
@@ -276,7 +250,7 @@ function prevQuality() {
                                 {{ item.value }}
                             </p>
                             <p class="text-xs uppercase tracking-widest mt-1" style="color: #717973; font-family: Manrope, sans-serif;">
-                                {{ locale === 'en' ? item.label_en : item.label_pt }}
+                                {{ item.label_pt }}
                             </p>
                         </div>
                     </div>
@@ -293,13 +267,13 @@ function prevQuality() {
                 <div class="max-w-2xl">
                     <span class="text-xs font-black uppercase tracking-[0.3em] mb-4 block"
                           style="color: #fbbf24; font-family: Manrope, sans-serif;">
-                        {{ t('Nossa Qualidade', 'Our Quality') }}
+                        Nossa Qualidade
                     </span>
                     <h2 class="font-headline font-extrabold text-4xl md:text-5xl leading-tight" style="color: #012d1d;">
-                        {{ locale === 'en' ? data.quality_title_en : data.quality_title_pt }}
+                        {{ data.quality_title_pt }}
                     </h2>
                     <p class="mt-4 text-lg" style="color: #717973; font-family: Newsreader, serif; font-style: italic;">
-                        {{ locale === 'en' ? data.quality_subtitle_en : data.quality_subtitle_pt }}
+                        {{ data.quality_subtitle_pt }}
                     </p>
                 </div>
 
@@ -309,7 +283,7 @@ function prevQuality() {
                         @click="prevQuality"
                         class="w-11 h-11 rounded-full border flex items-center justify-center transition-colors"
                         style="border-color: rgba(1,45,29,0.2); color: #012d1d;"
-                        :aria-label="t('Anterior', 'Previous')"
+                        aria-label="Anterior"
                     >
                         <span class="material-symbols-outlined">arrow_back</span>
                     </button>
@@ -318,7 +292,7 @@ function prevQuality() {
                         @click="nextQuality"
                         class="w-11 h-11 rounded-full border flex items-center justify-center transition-colors"
                         style="border-color: rgba(1,45,29,0.2); color: #012d1d;"
-                        :aria-label="t('Próximo', 'Next')"
+                        aria-label="Próximo"
                     >
                         <span class="material-symbols-outlined">arrow_forward</span>
                     </button>
@@ -339,10 +313,10 @@ function prevQuality() {
                     </div>
                     <div>
                         <h3 class="font-headline font-bold text-xl mb-3" style="color: #012d1d;">
-                            {{ locale === 'en' ? item.title_en : item.title_pt }}
+                            {{ item.title_pt }}
                         </h3>
                         <p class="leading-relaxed" style="color: #717973; font-family: Newsreader, serif;">
-                            {{ locale === 'en' ? item.desc_en : item.desc_pt }}
+                            {{ item.desc_pt }}
                         </p>
                     </div>
                     <span class="text-5xl font-black mt-auto self-end leading-none"
@@ -362,21 +336,21 @@ function prevQuality() {
         <div class="container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center relative z-10">
             <div>
                 <h2 class="text-white font-headline font-extrabold text-5xl md:text-6xl leading-[1.05] tracking-tight mb-8">
-                    {{ locale === 'en' ? data.cta_title_en : data.cta_title_pt }}
+                    {{ data.cta_title_pt }}
                 </h2>
                 <p class="text-lg leading-relaxed mb-10" style="color: rgba(255,255,255,0.55); font-family: Newsreader, serif; font-style: italic;">
-                    {{ locale === 'en' ? data.cta_subtitle_en : data.cta_subtitle_pt }}
+                    {{ data.cta_subtitle_pt }}
                 </p>
                 <div class="flex flex-wrap gap-4">
                     <button type="button" @click="openWhatsApp()"
                        class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95 hover:opacity-90"
                        style="background-color: #fbbf24; color: #012d1d; font-family: Manrope, sans-serif;">
-                        {{ t('Solicitar orçamento', 'Request a quote') }}
+                        Solicitar orçamento
                     </button>
-                    <Link :href="locale === 'en' ? '/en/catalog' : '/catalogo'"
+                    <Link href="/portfolio"
                           class="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold text-sm border transition-all active:scale-95 hover:bg-white/5"
                           style="border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.8); font-family: Manrope, sans-serif;">
-                        {{ t('Ver produtos', 'View products') }}
+                        Ver produtos
                     </Link>
                 </div>
             </div>

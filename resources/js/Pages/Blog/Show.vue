@@ -1,7 +1,6 @@
 <script setup>
 import SeoHead from '@/Components/Shared/SeoHead.vue';
 import { Link } from '@inertiajs/vue3';
-import { useLocale } from '@/composables/useLocale';
 import { useSettings } from '@/composables/useSettings';
 import { ref, computed } from 'vue';
 
@@ -12,14 +11,13 @@ const props = defineProps({
     seo: Object,
 });
 
-const { locale, t } = useLocale();
 const { setting } = useSettings();
 
 const whatsappNumber = computed(() =>
     (setting('whatsapp_number', '554999600329')).replace(/\D/g, '')
 );
 const whatsappUrl = computed(() =>
-    `https://wa.me/${whatsappNumber.value}?text=${encodeURIComponent(t('Olá! Tenho dúvidas sobre o artigo: ', 'Hello! I have questions about the post: ') + props.post.title)}`
+    `https://wa.me/${whatsappNumber.value}?text=${encodeURIComponent('Olá! Tenho dúvidas sobre o artigo: ' + props.post.title)}`
 );
 
 // Galeria: thumb selecionada
@@ -28,10 +26,10 @@ const activePhoto = ref(props.post.photos?.[0]?.url || null);
 const fallback = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80';
 
 function blogUrl() {
-    return locale.value === 'en' ? '/en/blog' : '/blog';
+    return '/blog';
 }
 function postUrl(slug) {
-    return `${locale.value === 'en' ? '/en' : ''}/blog/${slug}`;
+    return `/blog/${slug}`;
 }
 </script>
 
@@ -77,7 +75,7 @@ function postUrl(slug) {
                     <span v-if="post.author"
                         class="text-sm text-white/70"
                         style="font-family:Newsreader,serif;">
-                        {{ t('por', 'by') }} {{ post.author }}
+                        {{ 'por' }} {{ post.author }}
                     </span>
                 </div>
             </div>
@@ -87,7 +85,7 @@ function postUrl(slug) {
                 class="absolute bottom-8 right-6 flex items-center gap-2 px-4 py-2.5 rounded-full shadow-xl transition-all hover:scale-105"
                 style="background-color:#25d366; color:#fff; font-family:Manrope,sans-serif; font-size:12px; font-weight:700;">
                 <span class="material-symbols-outlined text-base" style="font-variation-settings:'FILL' 1;">chat</span>
-                <span class="hidden sm:inline">{{ t('Fale conosco', 'Contact us') }}</span>
+                <span class="hidden sm:inline">{{ 'Fale conosco' }}</span>
             </a>
         </div>
 
@@ -103,7 +101,7 @@ function postUrl(slug) {
                         class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-8 group"
                         style="font-family:Manrope,sans-serif; color:#012d1d;">
                         <span class="material-symbols-outlined text-base transition-transform group-hover:-translate-x-1">arrow_back</span>
-                        {{ t('Voltar ao Blog', 'Back to Blog') }}
+                        {{ 'Voltar ao Blog' }}
                     </Link>
 
                     <!-- Ficha da postagem -->
@@ -112,14 +110,14 @@ function postUrl(slug) {
                             <span class="material-symbols-outlined text-base" style="color:#6a5e33; font-variation-settings:'FILL' 1;">info</span>
                             <p class="text-xs font-bold uppercase tracking-widest"
                                 style="font-family:Manrope,sans-serif; color:#012d1d;">
-                                {{ t('Sobre este artigo', 'About this post') }}
+                                {{ 'Sobre este artigo' }}
                             </p>
                         </div>
 
                         <div v-if="post.category_label" class="space-y-1">
                             <p class="text-[9px] font-bold uppercase tracking-[0.2em]"
                                 style="font-family:Manrope,sans-serif; color:#9e9e9e;">
-                                {{ t('Categoria', 'Category') }}
+                                {{ 'Categoria' }}
                             </p>
                             <p class="text-sm font-bold" style="font-family:Manrope,sans-serif; color:#012d1d;">
                                 {{ post.category_label }}
@@ -129,7 +127,7 @@ function postUrl(slug) {
                         <div class="space-y-1">
                             <p class="text-[9px] font-bold uppercase tracking-[0.2em]"
                                 style="font-family:Manrope,sans-serif; color:#9e9e9e;">
-                                {{ t('Publicado em', 'Published on') }}
+                                {{ 'Publicado em' }}
                             </p>
                             <p class="text-sm font-bold" style="font-family:Manrope,sans-serif; color:#012d1d;">
                                 {{ post.published_at }}
@@ -139,7 +137,7 @@ function postUrl(slug) {
                         <div v-if="post.author" class="space-y-1">
                             <p class="text-[9px] font-bold uppercase tracking-[0.2em]"
                                 style="font-family:Manrope,sans-serif; color:#9e9e9e;">
-                                {{ t('Autor', 'Author') }}
+                                {{ 'Autor' }}
                             </p>
                             <p class="text-sm font-bold" style="font-family:Manrope,sans-serif; color:#012d1d;">
                                 {{ post.author }}
@@ -158,7 +156,7 @@ function postUrl(slug) {
                             style="background:linear-gradient(to top, rgba(1,45,29,0.85) 0%, transparent 100%);">
                             <span class="text-[9px] font-bold uppercase tracking-widest text-white"
                                 style="font-family:Manrope,sans-serif;">
-                                {{ t('VER GALERIA', 'VIEW GALLERY') }}
+                                {{ 'VER GALERIA' }}
                             </span>
                         </div>
                     </div>
@@ -182,14 +180,14 @@ function postUrl(slug) {
                         v-html="post.content">
                     </div>
                     <p v-else class="text-base italic" style="font-family:Newsreader,serif; color:#9e9e9e;">
-                        {{ t('Conteúdo não disponível.', 'Content not available.') }}
+                        {{ 'Conteúdo não disponível.' }}
                     </p>
 
                     <!-- Galeria de fotos -->
                     <div v-if="post.photos?.length" class="mt-12">
                         <h2 class="text-xl font-black mb-6"
                             style="font-family:Manrope,sans-serif; color:#012d1d;">
-                            {{ t('Galeria de Imagens', 'Photo Gallery') }}
+                            {{ 'Galeria de Imagens' }}
                         </h2>
 
                         <!-- Visualizador principal -->
@@ -236,18 +234,18 @@ function postUrl(slug) {
                         <div class="flex-1">
                             <h3 class="text-xl font-black text-white mb-2"
                                 style="font-family:Manrope,sans-serif;">
-                                {{ t('Interessado em nossos produtos?', 'Interested in our products?') }}
+                                {{ 'Interessado em nossos produtos?' }}
                             </h3>
                             <p class="text-sm italic text-white/70"
                                 style="font-family:Newsreader,serif;">
-                                {{ t('Nossa equipe está pronta para transformar seu projeto em realidade.', 'Our team is ready to bring your project to life.') }}
+                                {{ 'Nossa equipe está pronta para transformar seu projeto em realidade.' }}
                             </p>
                         </div>
                         <a :href="whatsappUrl" target="_blank" rel="noopener"
                             class="flex-shrink-0 flex items-center gap-3 px-6 py-3 rounded-xl font-bold text-sm transition-all hover:scale-105 shadow-lg"
                             style="font-family:Manrope,sans-serif; background-color:#25d366; color:#fff;">
                             <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">chat</span>
-                            {{ t('Solicitar Orçamento via WhatsApp', 'Request Quote on WhatsApp') }}
+                            {{ 'Solicitar Orçamento via WhatsApp' }}
                         </a>
                     </div>
 
@@ -262,7 +260,7 @@ function postUrl(slug) {
                             <div>
                                 <p class="text-[9px] font-bold uppercase tracking-[0.2em] mb-1"
                                     style="font-family:Manrope,sans-serif; color:#9e9e9e;">
-                                    {{ t('Anterior', 'Previous') }}
+                                    {{ 'Anterior' }}
                                 </p>
                                 <p class="text-sm font-bold leading-snug"
                                     style="font-family:Manrope,sans-serif; color:#012d1d;">
@@ -278,7 +276,7 @@ function postUrl(slug) {
                             <div>
                                 <p class="text-[9px] font-bold uppercase tracking-[0.2em] mb-1"
                                     style="font-family:Manrope,sans-serif; color:#9e9e9e;">
-                                    {{ t('Próximo', 'Next') }}
+                                    {{ 'Próximo' }}
                                 </p>
                                 <p class="text-sm font-bold leading-snug"
                                     style="font-family:Manrope,sans-serif; color:#012d1d;">

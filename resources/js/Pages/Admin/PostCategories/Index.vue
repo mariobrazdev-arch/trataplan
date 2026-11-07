@@ -10,7 +10,7 @@ defineProps({ categories: Array });
 const showModal   = ref(false);
 const editingItem = ref(null);
 
-const form = useForm({ name_pt: '', name_en: '', description_pt: '', description_en: '' });
+const form = useForm({ name_pt: '', description_pt: '' });
 
 function openCreate() {
     editingItem.value = null;
@@ -22,9 +22,7 @@ function openCreate() {
 function openEdit(cat) {
     editingItem.value   = cat;
     form.name_pt        = cat.name_pt ?? '';
-    form.name_en        = cat.name_en ?? '';
     form.description_pt = cat.description_pt ?? '';
-    form.description_en = cat.description_en ?? '';
     form.clearErrors();
     showModal.value = true;
 }
@@ -128,7 +126,7 @@ async function destroy(cat) {
                                 <h2 class="text-lg font-headline font-bold text-primary">
                                     {{ editingItem ? 'Editar Categoria' : 'Nova Categoria' }}
                                 </h2>
-                                <p class="text-xs font-body italic" style="color: #717973;">Preencha nos dois idiomas para exibição correta no site.</p>
+                                <p class="text-xs font-body italic" style="color: #717973;">Preencha para exibição no site.</p>
                             </div>
                             <button @click="closeModal" class="p-1.5 rounded-lg transition-colors" style="color: #717973;"
                                 @mouseenter="$event.currentTarget.style.backgroundColor='#ebe8e3'"
@@ -140,42 +138,24 @@ async function destroy(cat) {
                         <!-- Body -->
                         <form @submit.prevent="submit" class="px-6 py-5 space-y-4">
 
-                            <!-- Nomes -->
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color: #77574d;">Nome PT *</label>
-                                    <input v-model="form.name_pt" type="text" required maxlength="150"
-                                        placeholder="Ex.: Últimos Serviços"
-                                        class="w-full px-4 py-3 rounded-lg outline-none text-sm"
-                                        style="background-color: #ffffff; border: 1.5px solid #e8e4de;"
-                                        :style="form.errors.name_pt ? 'border-color:#ba1a1a;' : ''" />
-                                    <p v-if="form.errors.name_pt" class="text-xs mt-1" style="color:#ba1a1a;">{{ form.errors.name_pt }}</p>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color: #77574d;">Name EN</label>
-                                    <input v-model="form.name_en" type="text" maxlength="150"
-                                        placeholder="Ex.: Latest Services"
-                                        class="w-full px-4 py-3 rounded-lg outline-none text-sm"
-                                        style="background-color: #ffffff; border: 1.5px solid #e8e4de;" />
-                                </div>
+                            <!-- Nome -->
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color: #77574d;">Nome *</label>
+                                <input v-model="form.name_pt" type="text" required maxlength="150"
+                                    placeholder="Ex.: Últimos Serviços"
+                                    class="w-full px-4 py-3 rounded-lg outline-none text-sm"
+                                    style="background-color: #ffffff; border: 1.5px solid #e8e4de;"
+                                    :style="form.errors.name_pt ? 'border-color:#ba1a1a;' : ''" />
+                                <p v-if="form.errors.name_pt" class="text-xs mt-1" style="color:#ba1a1a;">{{ form.errors.name_pt }}</p>
                             </div>
 
-                            <!-- Descrições -->
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color: #77574d;">Descrição PT</label>
-                                    <textarea v-model="form.description_pt" rows="3" maxlength="500"
-                                        placeholder="Descrição em português..."
-                                        class="w-full px-4 py-3 rounded-lg outline-none text-sm resize-none"
-                                        style="background-color: #ffffff; border: 1.5px solid #e8e4de; font-family: Newsreader, serif;"></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color: #77574d;">Description EN</label>
-                                    <textarea v-model="form.description_en" rows="3" maxlength="500"
-                                        placeholder="Description in English..."
-                                        class="w-full px-4 py-3 rounded-lg outline-none text-sm resize-none"
-                                        style="background-color: #ffffff; border: 1.5px solid #e8e4de; font-family: Newsreader, serif;"></textarea>
-                                </div>
+                            <!-- Descrição -->
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color: #77574d;">Descrição</label>
+                                <textarea v-model="form.description_pt" rows="3" maxlength="500"
+                                    placeholder="Descrição em português..."
+                                    class="w-full px-4 py-3 rounded-lg outline-none text-sm resize-none"
+                                    style="background-color: #ffffff; border: 1.5px solid #e8e4de; font-family: Newsreader, serif;"></textarea>
                             </div>
 
                             <div class="flex items-center justify-end gap-3 pt-2">

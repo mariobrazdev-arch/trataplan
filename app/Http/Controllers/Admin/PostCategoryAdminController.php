@@ -13,7 +13,7 @@ class PostCategoryAdminController extends Controller
 {
     public function index(): Response
     {
-        $categories = PostCategory::orderBy('order')->latest('id')->get(['id', 'name_pt', 'name_en', 'description_pt', 'description_en', 'order']);
+        $categories = PostCategory::orderBy('order')->latest('id')->get(['id', 'name_pt', 'description_pt', 'order']);
 
         return Inertia::render('Admin/PostCategories/Index', [
             'categories' => $categories,
@@ -24,9 +24,7 @@ class PostCategoryAdminController extends Controller
     {
         $validated = $request->validate([
             'name_pt'        => ['required', 'string', 'max:150'],
-            'name_en'        => ['nullable', 'string', 'max:150'],
             'description_pt' => ['nullable', 'string', 'max:500'],
-            'description_en' => ['nullable', 'string', 'max:500'],
         ]);
 
         $validated['order'] = PostCategory::max('order') + 1;
@@ -41,9 +39,7 @@ class PostCategoryAdminController extends Controller
     {
         $validated = $request->validate([
             'name_pt'        => ['required', 'string', 'max:150'],
-            'name_en'        => ['nullable', 'string', 'max:150'],
             'description_pt' => ['nullable', 'string', 'max:500'],
-            'description_en' => ['nullable', 'string', 'max:500'],
         ]);
 
         $postCategory->update($validated);

@@ -1,13 +1,10 @@
 <script setup>
 import SeoHead from '@/Components/Shared/SeoHead.vue';
-import { useLocale } from '@/composables/useLocale';
 
 const props = defineProps({
     partners: Array,
     seo: Object,
 });
-
-const { t } = useLocale();
 </script>
 
 <template>
@@ -18,10 +15,10 @@ const { t } = useLocale();
             <!-- Header -->
             <div class="text-center mb-16">
                 <span class="font-bold tracking-widest text-sm uppercase mb-3 block" style="font-family: Manrope, sans-serif; color: #6a5e33;">
-                    {{ t('PARCEIROS', 'PARTNERS') }}
+                    {{ 'PARCEIROS' }}
                 </span>
                 <h1 class="text-4xl md:text-5xl font-bold" style="font-family: Manrope, sans-serif; color: #012d1d;">
-                    {{ t('Nossos Parceiros', 'Our Partners') }}
+                    {{ 'Nossos Parceiros' }}
                 </h1>
                 <div class="w-24 h-1 mx-auto mt-6" style="background-color: #6a5e33;"></div>
             </div>
@@ -30,7 +27,7 @@ const { t } = useLocale();
             <div v-if="!partners?.length" class="text-center py-24">
                 <span class="material-symbols-outlined text-6xl mb-4 block" style="color: #c1c8c2;">handshake</span>
                 <p style="font-family: Newsreader, serif; color: #717973;">
-                    {{ t('Parceiros em breve.', 'Partners coming soon.') }}
+                    {{ 'Parceiros em breve.' }}
                 </p>
             </div>
 

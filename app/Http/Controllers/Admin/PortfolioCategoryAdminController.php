@@ -14,10 +14,12 @@ use Inertia\Response;
 
 class PortfolioCategoryAdminController extends Controller
 {
+    private const MAX_PHOTOS = 25;
+
     private function productCategoriesList(): array
     {
-        return ProductCategory::orderBy('name_pt')->get(['id', 'name_pt', 'name_en'])
-            ->map(fn ($c) => ['id' => $c->id, 'name' => $c->name_pt . ($c->name_en ? " / {$c->name_en}" : '')])
+        return ProductCategory::orderBy('name_pt')->get(['id', 'name_pt'])
+            ->map(fn ($c) => ['id' => $c->id, 'name' => $c->name_pt])
             ->toArray();
     }
 
@@ -26,16 +28,12 @@ class PortfolioCategoryAdminController extends Controller
         $categories = PortfolioCategory::with(['photos', 'productCategory'])->orderBy('name_pt')->get()->map(fn ($c) => [
             'id'        => $c->id,
             'name_pt'   => $c->name_pt,
-            'name_en'   => $c->name_en,
             'description_pt' => $c->description_pt,
-            'description_en' => $c->description_en,
             'cover_url' => $c->cover_url ?? $c->photos->first()?->url,
             'is_active' => $c->is_active,
             'photos_count' => $c->photos->count(),
             'product_category_id'   => $c->product_category_id,
-            'product_category_name' => $c->productCategory
-                ? $c->productCategory->name_pt . ($c->productCategory->name_en ? " / {$c->productCategory->name_en}" : '')
-                : null,
+            'product_category_name' => $c->productCategory?->name_pt,
         ]);
 
         return Inertia::render('Admin/Portfolio/Categories/Index', [
@@ -56,13 +54,13 @@ class PortfolioCategoryAdminController extends Controller
         $validated = $request->validate([
             'product_category_id' => ['nullable', 'integer', 'exists:product_categories,id'],
             'name_pt'   => ['required', 'string', 'max:150'],
-            'name_en'   => ['required', 'string', 'max:150'],
             'description_pt' => ['nullable', 'string'],
-            'description_en' => ['nullable', 'string'],
             'cover_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
             'is_active' => ['boolean'],
-            'new_photos' => ['nullable', 'array'],
+            'new_photos' => ['nullable', 'array', 'max:' . self::MAX_PHOTOS],
             'new_photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+        ], [
+            'new_photos.max' => 'Cada item pode ter no máximo ' . self::MAX_PHOTOS . ' fotos.',
         ]);
 
         $category = PortfolioCategory::create(collect($validated)->except(['cover_photo', 'new_photos'])->all());
@@ -102,9 +100,7 @@ class PortfolioCategoryAdminController extends Controller
                 'id'                  => $category->id,
                 'product_category_id' => $category->product_category_id,
                 'name_pt'             => $category->name_pt,
-                'name_en'             => $category->name_en,
                 'description_pt'      => $category->description_pt,
-                'description_en'      => $category->description_en,
                 'cover_url'           => $category->cover_url,
                 'is_active'           => $category->is_active,
                 'photos' => $category->photos->map(fn ($ph) => [
@@ -118,16 +114,18 @@ class PortfolioCategoryAdminController extends Controller
 
     public function update(Request $request, PortfolioCategory $category): RedirectResponse
     {
+        $existingPhotosCount = $category->photos()->count();
+
         $validated = $request->validate([
             'product_category_id' => ['nullable', 'integer', 'exists:product_categories,id'],
             'name_pt'   => ['required', 'string', 'max:150'],
-            'name_en'   => ['required', 'string', 'max:150'],
             'description_pt' => ['nullable', 'string'],
-            'description_en' => ['nullable', 'string'],
             'cover_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
             'is_active' => ['boolean'],
-            'new_photos' => ['nullable', 'array'],
+            'new_photos' => ['nullable', 'array', 'max:' . max(0, self::MAX_PHOTOS - $existingPhotosCount)],
             'new_photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+        ], [
+            'new_photos.max' => 'Cada item pode ter no máximo ' . self::MAX_PHOTOS . ' fotos. Este item já possui ' . $existingPhotosCount . '.',
         ]);
 
         $category->update(collect($validated)->except(['cover_photo', 'new_photos'])->all());

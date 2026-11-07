@@ -24,7 +24,6 @@ class PostAdminController extends Controller
                 'id' => $post->id,
                 'slug' => $post->slug,
                 'title_pt' => $post->title_pt,
-                'title_en' => $post->title_en,
                 'featured_image_url' => $post->featured_image_url,
                 'photos_count' => $post->photos()->count(),
                 'is_published' => $post->is_published,
@@ -41,7 +40,7 @@ class PostAdminController extends Controller
     {
         return Inertia::render('Admin/Posts/Form', [
             'post' => null,
-            'postCategories' => PostCategory::orderBy('order')->get(['id', 'name_pt', 'name_en']),
+            'postCategories' => PostCategory::orderBy('order')->get(['id', 'name_pt']),
         ]);
     }
 
@@ -49,16 +48,11 @@ class PostAdminController extends Controller
     {
         $validated = $request->validate([
             'title_pt' => ['required', 'string', 'max:255'],
-            'title_en' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:posts,slug'],
             'content_pt' => ['nullable', 'string'],
-            'content_en' => ['nullable', 'string'],
             'excerpt_pt' => ['nullable', 'string', 'max:300'],
-            'excerpt_en' => ['nullable', 'string', 'max:300'],
             'meta_title_pt' => ['nullable', 'string', 'max:60'],
-            'meta_title_en' => ['nullable', 'string', 'max:60'],
             'meta_description_pt' => ['nullable', 'string', 'max:160'],
-            'meta_description_en' => ['nullable', 'string', 'max:160'],
             'featured_image' => ['nullable', 'image', 'max:5120'],
             'new_photos' => ['nullable', 'array'],
             'new_photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
@@ -103,20 +97,15 @@ class PostAdminController extends Controller
         $post->load('photos');
 
         return Inertia::render('Admin/Posts/Form', [
-            'postCategories' => PostCategory::orderBy('order')->get(['id', 'name_pt', 'name_en']),
+            'postCategories' => PostCategory::orderBy('order')->get(['id', 'name_pt']),
             'post' => [
                 'id' => $post->id,
                 'slug' => $post->slug,
                 'title_pt' => $post->title_pt,
-                'title_en' => $post->title_en,
                 'content_pt' => $post->content_pt,
-                'content_en' => $post->content_en,
                 'excerpt_pt' => $post->excerpt_pt,
-                'excerpt_en' => $post->excerpt_en,
                 'meta_title_pt' => $post->meta_title_pt,
-                'meta_title_en' => $post->meta_title_en,
                 'meta_description_pt' => $post->meta_description_pt,
-                'meta_description_en' => $post->meta_description_en,
                 'featured_image_url' => $post->featured_image_url,
                 'photos' => $post->photos->map(fn ($photo) => [
                     'id' => $photo->id,
@@ -132,16 +121,11 @@ class PostAdminController extends Controller
     {
         $validated = $request->validate([
             'title_pt' => ['required', 'string', 'max:255'],
-            'title_en' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', "unique:posts,slug,{$post->id}"],
             'content_pt' => ['nullable', 'string'],
-            'content_en' => ['nullable', 'string'],
             'excerpt_pt' => ['nullable', 'string', 'max:300'],
-            'excerpt_en' => ['nullable', 'string', 'max:300'],
             'meta_title_pt' => ['nullable', 'string', 'max:60'],
-            'meta_title_en' => ['nullable', 'string', 'max:60'],
             'meta_description_pt' => ['nullable', 'string', 'max:160'],
-            'meta_description_en' => ['nullable', 'string', 'max:160'],
             'featured_image' => ['nullable', 'image', 'max:5120'],
             'new_photos' => ['nullable', 'array'],
             'new_photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],

@@ -19,7 +19,6 @@ const navItems = [
     { label: 'Cat. Postagens',href: '/admin/post-categorias', icon: 'label' },
 
     { separator: true, label: 'Portfólio' },
-    { label: 'Categorias',    href: '/admin/produto-categorias',    icon: 'category' },
     { label: 'Mão de Obra',   href: '/admin/portfolio/servicos',    icon: 'construction' },
     { label: 'Produtos',      href: '/admin/portfolio/categorias',  icon: 'inventory_2' },
 
@@ -30,6 +29,7 @@ const navItems = [
     { label: 'Analytics',     href: '/admin/analytics',     icon: 'analytics' },
 
     { separator: true, label: 'Configurações' },
+    { label: 'Heroes',        href: '/admin/heroes',        icon: 'view_carousel' },
     { label: 'Pág. Sobre',    href: '/admin/sobre',         icon: 'info' },
     { label: 'Pág. Home',     href: '/admin/configuracoes', icon: 'settings' },
 ];

@@ -16,14 +16,10 @@ class ContactController extends Controller
 {
     public function show(): Response
     {
-        $locale = App::getLocale();
-
         return Inertia::render('Contact', [
             'seo' => [
-                'title' => $locale === 'pt' ? 'Fale Conosco' : 'Contact Us',
-                'description' => $locale === 'pt'
-                    ? 'Entre em contato com a Trataplan. Estamos prontos para atender você.'
-                    : 'Get in touch with Trataplan. We are ready to assist you.',
+                'title' => 'Fale Conosco',
+                'description' => 'Entre em contato com a Trataplan. Estamos prontos para atender você.',
                 'canonical' => url()->current(),
             ],
         ]);

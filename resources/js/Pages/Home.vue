@@ -1,20 +1,20 @@
 <script setup>
 import SeoHead from '@/Components/Shared/SeoHead.vue';
+import HeroCarousel from '@/Components/Home/HeroCarousel.vue';
 import { Link, useForm } from '@inertiajs/vue3';
-import { useLocale } from '@/composables/useLocale';
 import { useSettings } from '@/composables/useSettings';
 import { useWhatsAppPicker } from '@/composables/useWhatsAppPicker';
 import { computed, ref } from 'vue';
 
 const props = defineProps({
+    heroes: { type: Array, default: () => [] },
     featuredPosts: Array,
     seo: Object,
     categories: Array,
     services: Array,
 });
 
-const { locale, t } = useLocale();
-const { settings, setting, logoTransparentUrl, companyUnits } = useSettings();
+const { setting, logoTransparentUrl, companyUnits } = useSettings();
 const { open: openWhatsApp } = useWhatsAppPicker();
 
 // Unidades: usa company_units do banco ou monta uma a partir dos campos legados
@@ -34,44 +34,41 @@ const unitAddr   = computed(() => activeUnit.value?.address || setting('contact_
 const unitWaNum  = computed(() => (activeUnit.value?.whatsapp || setting('whatsapp_number', '554999600329')).replace(/\D/g,''));
 const unitWaUrl  = computed(() => `https://wa.me/${unitWaNum.value}`);
 
-const bannerBg = computed(() => {
-    const img = settings.value['banner_image'];
-    if (!img) return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80';
-    return img.startsWith('http') ? img : `/storage/${img}`;
-});
-
-const bannerTitle = computed(() =>
-    locale.value === 'en'
-        ? (settings.value['banner_title_en'] || 'Treated Wood that Lasts Generations.')
-        : (settings.value['banner_title_pt'] || 'Madeira Tratada que Dura Gerações.')
-);
-
-const bannerSubtitle = computed(() =>
-    locale.value === 'en'
-        ? (settings.value['banner_subtitle_en'] || 'Eucalyptus and Autoclaved Pine solutions for Construction, Fencing and Leisure with the robustness your project demands.')
-        : (settings.value['banner_subtitle_pt'] || 'Soluções em Eucalipto e Pinus Autoclavado para Construção, Cercas e Lazer com a robustez que seu projeto exige.')
-);
-
 const segmentFallbackImgs = [
     'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80',
     'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=80',
     'https://images.unsplash.com/photo-1597200381847-30ec200eeb9a?w=600&q=80',
     'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80',
 ];
-const segmentLabels = [
-    { pt: 'Segmento', en: 'Segment' },
-    { pt: 'Estrutural', en: 'Structural' },
-    { pt: 'Rural', en: 'Rural' },
-    { pt: 'Externo', en: 'Outdoor' },
-];
+const segmentLabels = ['Segmento', 'Estrutural', 'Rural', 'Externo'];
 const displayCategories = computed(() => {
     const source = props.categories || [];
     return source.slice(0, 4).map((cat, i) => ({
         ...cat,
-        description: locale.value === 'en' ? (cat.description_en || '') : (cat.description_pt || ''),
+        description: cat.description_pt || '',
         label: segmentLabels[i] ?? segmentLabels[0],
     }));
 });
+
+// Marquee de produtos do portfólio (fotos + nomes), abaixo de "Nossas Unidades"
+const marqueeFallbackImgs = [
+    'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80',
+    'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=80',
+    'https://images.unsplash.com/photo-1597200381847-30ec200eeb9a?w=600&q=80',
+    'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80',
+    'https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?w=600&q=80',
+];
+const marqueeProducts = computed(() => {
+    const source = props.categories || [];
+    return source.map((cat, i) => ({
+        id: cat.id,
+        name: cat.name_pt,
+        cover_url: cat.cover_url || cat.gallery_urls?.[0] || marqueeFallbackImgs[i % marqueeFallbackImgs.length],
+    }));
+});
+function marqueeItemUrl(item) {
+    return `/portfolio/${item.id}`;
+}
 
 const contactAddress = computed(() => setting('contact_address', 'SC-283, Planalto Alegre - SC, 89882-000'));
 const contactPhone = computed(() => setting('contact_phone', '+55 49 9960-0329'));
@@ -100,7 +97,7 @@ const submitContact = () => {
     if (!contactForm.unit_email && defaultUnitEmail.value) {
         contactForm.unit_email = defaultUnitEmail.value;
     }
-    contactForm.post(locale.value === 'en' ? '/en/contact' : '/contato', {
+    contactForm.post('/contato', {
         preserveScroll: true,
         onSuccess: () => contactForm.reset(),
     });
@@ -116,9 +113,9 @@ const serviceFallbackImgs = [
 const servicesForShowcase = computed(() => {
     return (props.services || []).map((service, i) => ({
         id: service.id,
-        title: locale.value === 'en' ? service.name_en : service.name_pt,
-        tag: locale.value === 'en' ? 'Specialized Workforce' : 'Mão de Obra Especializada',
-        description: locale.value === 'en' ? service.description_en : service.description_pt,
+        title: service.name_pt,
+        tag: 'Mão de Obra Especializada',
+        description: service.description_pt,
         image: service.cover_url || service.gallery_urls?.[0] || serviceFallbackImgs[i % serviceFallbackImgs.length],
     }));
 });
@@ -151,54 +148,17 @@ function prevServices() {
     <SeoHead v-bind="seo" />
 
     <!-- ──────────────────────────────── HERO ──────────────────────────────────── -->
-    <section class="relative min-h-[560px] md:h-[921px] flex items-center overflow-hidden">
-        <div class="absolute inset-0 z-0">
-            <img
-                class="w-full h-full object-cover"
-                :src="bannerBg"
-                :alt="t('Madeira tratada premium – Trataplan', 'Premium treated wood – Trataplan')"
-            />
-            <div class="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/40 to-transparent"></div>
-        </div>
-        <div class="container mx-auto px-6 relative z-10 grid md:grid-cols-2">
-            <div class="max-w-2xl">
-                <h2 class="text-emerald-50 font-headline font-extrabold text-4xl md:text-5xl lg:text-7xl tracking-tight leading-[1.1] mb-6">
-                    {{ bannerTitle }}
-                </h2>
-                <p class="text-emerald-50/80 text-xl font-body mb-10 max-w-lg leading-relaxed italic">
-                    {{ bannerSubtitle }}
-                </p>
-                <div class="flex flex-wrap gap-4 items-center">
-                    <button
-                        type="button"
-                        @click="openWhatsApp()"
-                        class="bg-tertiary hover:bg-tertiary/90 text-on-tertiary px-8 py-4 rounded-xl font-headline font-bold uppercase tracking-wider transition-transform active:scale-95 shadow-xl shadow-primary/20"
-                    >
-                        {{ t('Falar no WhatsApp', 'Chat on WhatsApp') }}
-                    </button>
-                    <div class="bg-secondary-container/20 backdrop-blur-md border border-white/10 px-6 py-4 rounded-xl flex items-center gap-3">
-                        <span class="material-symbols-outlined text-secondary-container" style="font-variation-settings: 'FILL' 1;">verified</span>
-                        <span class="text-emerald-50 font-headline font-bold text-sm uppercase tracking-widest">
-                            {{ t('15 Anos de Garantia', '15-Year Guarantee') }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <HeroCarousel :heroes="heroes" />
 
     <!-- ──────────────────────────── SEGMENTS GRID ─────────────────────────────── -->
     <section class="py-24 bg-surface-container-low wood-texture-overlay">
         <div class="container mx-auto px-6">
             <div class="max-w-4xl mb-20">
                 <h3 class="text-primary font-headline font-extrabold text-4xl mb-6 tracking-tight">
-                    {{ t('Especialistas em Madeira Autoclavada', 'Specialists in Autoclaved Wood') }}
+                    {{ 'Especialistas em Madeira Autoclavada' }}
                 </h3>
                 <p class="text-on-surface-variant font-body text-xl leading-relaxed">
-                    {{ t(
-                        'A Trataplan possui madeiras tratadas para os mais diversos segmentos. Decks, pergolados, palanques para cercas, mangueiras, madeira para construção de casas (parede, forro, barrotes, assoalho), construção de barracões, quiosques, chalés e muito mais.',
-                        'Trataplan offers treated wood for the most diverse segments. Decks, pergolas, fence stakes, handling pens, wood for house construction (walls, ceilings, joists, flooring), sheds, kiosks, chalets and much more.'
-                    ) }}
+                    {{ 'A Trataplan possui madeiras tratadas para os mais diversos segmentos. Decks, pergolados, palanques para cercas, mangueiras, madeira para construção de casas (parede, forro, barrotes, assoalho), construção de barracões, quiosques, chalés e muito mais.' }}
                 </p>
             </div>
 
@@ -206,24 +166,22 @@ function prevServices() {
                 <a
                     v-for="(item, i) in displayCategories"
                     :key="item.id ?? i"
-                    :href="item.product_category_id
-                        ? (locale === 'en' ? '/en/catalog' : '/catalogo') + '?cat=' + item.product_category_id
-                        : (locale === 'en' ? '/en/catalog' : '/catalogo')"
+                    :href="'/portfolio/' + item.id"
                     class="group relative aspect-[3/4] overflow-hidden rounded-xl bg-surface-container-highest block"
                     :class="{ 'md:mt-12': i === 1 || i === 3 }"
                 >
                     <img
                         :src="item.cover_url || item.gallery_urls?.[0] || segmentFallbackImgs[i % segmentFallbackImgs.length]"
-                        :alt="locale === 'en' ? item.name_en : item.name_pt"
+                        :alt="item.name_pt"
                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                     <div class="absolute inset-0 bg-gradient-to-t from-primary via-transparent to-transparent opacity-80"></div>
                     <div class="absolute bottom-0 left-0 p-8">
                         <span class="text-amber-200 font-headline text-xs font-bold tracking-[0.2em] uppercase">
-                            {{ locale === 'en' ? item.label.en : item.label.pt }}
+                            {{ item.label }}
                         </span>
                         <h4 class="text-white font-headline font-extrabold text-2xl">
-                            {{ locale === 'en' ? item.name_en : item.name_pt }}
+                            {{ item.name_pt }}
                         </h4>
                         <p v-if="item.description" class="text-white/85 font-body text-sm mt-2 line-clamp-2">
                             {{ item.description }}
@@ -232,8 +190,8 @@ function prevServices() {
                 </a>
             </div>
             <div v-else class="rounded-2xl p-10 text-center" style="background-color: #f0ede8;">
-                <p class="font-headline font-bold text-xl text-primary mb-2">{{ t('Nenhum produto cadastrado', 'No products registered') }}</p>
-                <p class="font-body text-on-surface-variant">{{ t('Cadastre em Admin > Portfólio > Produtos para exibir aqui.', 'Register items in Admin > Portfolio > Products to show them here.') }}</p>
+                <p class="font-headline font-bold text-xl text-primary mb-2">{{ 'Nenhum produto cadastrado' }}</p>
+                <p class="font-body text-on-surface-variant">{{ 'Cadastre em Admin > Portfólio > Produtos para exibir aqui.' }}</p>
             </div>
         </div>
     </section>
@@ -244,17 +202,14 @@ function prevServices() {
             <div class="flex flex-col md:flex-row items-end justify-between mb-16 gap-8">
                 <div class="max-w-2xl">
                     <span class="text-secondary font-headline text-xs font-black tracking-[0.3em] uppercase">
-                        {{ t('Portfólio Trataplan', 'Trataplan Portfolio') }}
+                        {{ 'Portfólio Trataplan' }}
                     </span>
                     <h3 class="text-primary font-headline font-extrabold text-5xl mt-4 tracking-tighter">
-                        {{ t('Projetos que Inspiram Confiança', 'Projects that Inspire Confidence') }}
+                        {{ 'Projetos que Inspiram Confiança' }}
                     </h3>
                 </div>
                 <p class="font-body text-xl italic text-on-surface-variant max-w-sm">
-                    {{ t(
-                        '"A excelência no tratamento da madeira é o alicerce de obras que desafiam o tempo."',
-                        '"Excellence in wood treatment is the foundation of works that defy time."'
-                    ) }}
+                    {{ '"A excelência no tratamento da madeira é o alicerce de obras que desafiam o tempo."' }}
                 </p>
             </div>
 
@@ -263,7 +218,7 @@ function prevServices() {
                     type="button"
                     @click="prevServices"
                     class="w-11 h-11 rounded-full border border-primary/20 text-primary hover:bg-primary hover:text-white transition-colors flex items-center justify-center"
-                    :aria-label="t('Anterior', 'Previous')"
+                    :aria-label="'Anterior'"
                 >
                     <span class="material-symbols-outlined">arrow_back</span>
                 </button>
@@ -271,7 +226,7 @@ function prevServices() {
                     type="button"
                     @click="nextServices"
                     class="w-11 h-11 rounded-full border border-primary/20 text-primary hover:bg-primary hover:text-white transition-colors flex items-center justify-center"
-                    :aria-label="t('Próximo', 'Next')"
+                    :aria-label="'Próximo'"
                 >
                     <span class="material-symbols-outlined">arrow_forward</span>
                 </button>
@@ -281,7 +236,7 @@ function prevServices() {
                 <a
                     v-for="(item, i) in visibleServices"
                     :key="item.id"
-                    :href="locale === 'en' ? '/en/catalog?cat=service' : '/catalogo?cat=service'"
+                    :href="'/mao-de-obra/' + item.id"
                     class="space-y-6 block group"
                     :class="{ 'md:pt-24': i === 1 && visibleServices.length === 3 }"
                 >
@@ -294,8 +249,8 @@ function prevServices() {
                 </a>
             </div>
             <div v-else class="rounded-2xl p-10 text-center" style="background-color: #f0ede8;">
-                <p class="font-headline font-bold text-xl text-primary mb-2">{{ t('Nenhuma mão de obra cadastrada', 'No workforce items registered') }}</p>
-                <p class="font-body text-on-surface-variant">{{ t('Cadastre em Admin > Portfólio > Mão de Obra para exibir aqui.', 'Register items in Admin > Portfolio > Workforce to show them here.') }}</p>
+                <p class="font-headline font-bold text-xl text-primary mb-2">{{ 'Nenhuma mão de obra cadastrada' }}</p>
+                <p class="font-body text-on-surface-variant">{{ 'Cadastre em Admin > Portfólio > Mão de Obra para exibir aqui.' }}</p>
             </div>
         </div>
     </section>
@@ -307,25 +262,25 @@ function prevServices() {
             <div class="grid md:grid-cols-2 gap-20 items-center">
                 <div>
                     <h3 class="font-headline font-extrabold text-5xl mb-8 tracking-tight">
-                        {{ t('O Processo que Garante Durabilidade Imbatível', 'The Process that Guarantees Unbeatable Durability') }}
+                        {{ 'O Processo que Garante Durabilidade Imbatível' }}
                     </h3>
                     <div class="space-y-12">
                         <div
                             v-for="feature in [
                                 {
                                     icon: 'eco',
-                                    title: t('100% Reflorestamento', '100% Reforestation'),
-                                    desc: t('Trabalhamos exclusivamente com madeiras de fontes renováveis, respeitando o ecossistema e garantindo o futuro do planeta.', 'We work exclusively with wood from renewable sources, respecting the ecosystem and ensuring the planet\'s future.'),
+                                    title: '100% Reflorestamento',
+                                    desc: 'Trabalhamos exclusivamente com madeiras de fontes renováveis, respeitando o ecossistema e garantindo o futuro do planeta.',
                                 },
                                 {
                                     icon: 'precision_manufacturing',
-                                    title: t('Vácuo-Pressão (Autoclave)', 'Vacuum-Pressure (Autoclave)'),
-                                    desc: t('Nossas madeiras são impregnadas com preservativos químicos sob alta pressão, tornando-as imunes a cupins e fungos.', 'Our wood is impregnated with chemical preservatives under high pressure, making it immune to termites and fungi.'),
+                                    title: 'Vácuo-Pressão (Autoclave)',
+                                    desc: 'Nossas madeiras são impregnadas com preservativos químicos sob alta pressão, tornando-as imunes a cupins e fungos.',
                                 },
                                 {
                                     icon: 'shield_with_heart',
-                                    title: t('Garantia de 15 Anos', '15-Year Guarantee'),
-                                    desc: t('A confiança na qualidade do nosso processo nos permite oferecer uma das maiores garantias do mercado nacional.', 'Confidence in the quality of our process allows us to offer one of the highest guarantees in the national market.'),
+                                    title: 'Garantia de 15 Anos',
+                                    desc: 'A confiança na qualidade do nosso processo nos permite oferecer uma das maiores garantias do mercado nacional.',
                                 },
                             ]"
                             :key="feature.icon"
@@ -345,13 +300,13 @@ function prevServices() {
                 <div class="relative">
                     <img
                         src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80"
-                        :alt="t('Processo de tratamento em autoclave', 'Autoclave treatment process')"
+                        :alt="'Processo de tratamento em autoclave'"
                         class="rounded-2xl shadow-2xl"
                     />
                     <div class="hidden md:block absolute -bottom-10 -left-10 bg-secondary px-10 py-12 rounded-xl shadow-2xl max-w-xs">
                         <p class="text-white font-headline font-black text-6xl leading-none">15</p>
                         <p class="text-amber-200 font-headline font-bold text-xl uppercase tracking-tighter">
-                            {{ t('Anos de Tranquilidade', 'Years of Peace of Mind') }}
+                            {{ 'Anos de Tranquilidade' }}
                         </p>
                     </div>
                 </div>
@@ -363,10 +318,10 @@ function prevServices() {
     <section class="py-24 bg-surface">
         <div class="container mx-auto px-6 text-center mb-16">
             <span class="text-tertiary font-headline text-xs font-bold tracking-[0.4em] uppercase">
-                {{ t('Inovação e Projetos', 'Innovation and Projects') }}
+                {{ 'Inovação e Projetos' }}
             </span>
             <h3 class="text-primary font-headline font-extrabold text-5xl mt-4">
-                {{ t('Últimas Execuções', 'Latest Executions') }}
+                {{ 'Últimas Execuções' }}
             </h3>
         </div>
         <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -376,7 +331,7 @@ function prevServices() {
                     :key="post.id"
                     class="group cursor-pointer"
                 >
-                    <Link :href="(locale === 'en' ? '/en/blog/' : '/blog/') + post.slug">
+                    <Link :href="'/blog/' + post.slug">
                         <div class="relative h-[220px] md:h-[400px] rounded-2xl overflow-hidden mb-6">
                             <img
                                 v-if="post.featured_image_url"
@@ -398,8 +353,8 @@ function prevServices() {
             </template>
             <template v-else>
                 <div class="md:col-span-2 rounded-2xl p-10 text-center" style="background-color: #f0ede8;">
-                    <p class="font-headline font-bold text-xl text-primary mb-2">{{ t('Nenhum trabalho publicado', 'No published work yet') }}</p>
-                    <p class="font-body text-on-surface-variant">{{ t('Cadastre e publique postagens em Admin > Postagens para exibir aqui.', 'Create and publish posts in Admin > Posts to display them here.') }}</p>
+                    <p class="font-headline font-bold text-xl text-primary mb-2">{{ 'Nenhum trabalho publicado' }}</p>
+                    <p class="font-body text-on-surface-variant">{{ 'Cadastre e publique postagens em Admin > Postagens para exibir aqui.' }}</p>
                 </div>
             </template>
         </div>
@@ -413,12 +368,12 @@ function prevServices() {
             <div class="mb-10">
                 <span class="text-xs font-black uppercase tracking-[0.3em] text-amber-600"
                       style="font-family: Manrope, sans-serif;">
-                    {{ t('Onde Estamos', 'Where We Are') }}
+                    {{ 'Onde Estamos' }}
                 </span>
                 <h3 class="text-primary font-headline font-extrabold text-4xl mt-2">
                     {{ units.length > 1
-                        ? t('Nossas Unidades', 'Our Locations')
-                        : t('Visite Nossa Unidade', 'Visit Our Location') }}
+                        ? 'Nossas Unidades'
+                        : 'Visite Nossa Unidade' }}
                 </h3>
             </div>
 
@@ -436,7 +391,7 @@ function prevServices() {
                 >
                     <span class="w-2 h-2 rounded-full shrink-0"
                           :style="activeIdx === i ? 'background:#fbbf24;' : 'background:#012d1d44;'"></span>
-                    {{ unit.label || (unit.tipo === 'matriz' ? t('Sede', 'HQ') : `${t('Unidade','Branch')} ${i + 1}`) }}
+                    {{ unit.label || (unit.tipo === 'matriz' ? 'Sede' : `Unidade ${i + 1}`) }}
                 </button>
             </div>
 
@@ -465,7 +420,7 @@ function prevServices() {
                         <span v-if="units.length > 1"
                               class="mt-3 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest"
                               style="background: rgba(251,191,36,0.15); color: #fbbf24; font-family: Manrope, sans-serif;">
-                            {{ activeUnit.tipo === 'matriz' ? t('Sede', 'Headquarters') : t('Filial', 'Branch') }}
+                            {{ activeUnit.tipo === 'matriz' ? 'Sede' : 'Filial' }}
                         </span>
                         <p v-if="activeUnit.label" class="mt-1 text-sm" style="color:rgba(255,255,255,0.4); font-family: Manrope, sans-serif;">
                             {{ activeUnit.label }}
@@ -479,7 +434,7 @@ function prevServices() {
                             <div>
                                 <p class="text-xs font-bold uppercase tracking-widest mb-1"
                                    style="color: rgba(255,255,255,0.3); font-family: Manrope, sans-serif;">
-                                    {{ t('Endereço', 'Address') }}
+                                    {{ 'Endereço' }}
                                 </p>
                                 <p class="text-white/85 text-sm leading-snug" style="font-family: Newsreader, serif;">
                                     {{ unitAddr }}
@@ -529,7 +484,7 @@ function prevServices() {
                             <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                             </svg>
-                            {{ t('Falar pelo WhatsApp', 'Chat on WhatsApp') }}
+                            {{ 'Falar pelo WhatsApp' }}
                         </a>
                     </div>
                 </div>
@@ -546,14 +501,14 @@ function prevServices() {
                             style="border:0;"
                             allowfullscreen=""
                             loading="lazy"
-                            :title="t('Localização Trataplan', 'Trataplan Location')"
+                            :title="'Localização Trataplan'"
                         ></iframe>
                         <div v-else class="w-full h-full min-h-[340px] flex flex-col items-center justify-center gap-3"
                              style="background: #f0f4f2;">
                             <span class="material-symbols-outlined text-4xl" style="color: #c8d8cf;">map</span>
                             <p class="text-xs font-bold uppercase tracking-widest text-center px-6"
                                style="color: #a0b8ad; font-family: Manrope, sans-serif;">
-                                {{ t('Configure o link do mapa nas configurações', 'Configure the map link in settings') }}
+                                {{ 'Configure o link do mapa nas configurações' }}
                             </p>
                         </div>
                     </div>
@@ -561,7 +516,7 @@ function prevServices() {
                     <!-- Formulário de orçamento -->
                     <div class="rounded-2xl p-7 border bg-white" style="border-color: rgba(1,45,29,0.07);">
                         <h4 class="font-headline font-bold text-lg mb-5 text-primary">
-                            {{ t('Solicite um Orçamento', 'Request a Quote') }}
+                            {{ 'Solicite um Orçamento' }}
                         </h4>
                         <!-- Sucesso -->
                         <div v-if="contactForm.wasSuccessful"
@@ -570,7 +525,7 @@ function prevServices() {
                             <span class="material-symbols-outlined text-xl shrink-0"
                                   style="color: #012d1d; font-variation-settings:'FILL' 1;">check_circle</span>
                             <p class="text-sm font-bold" style="color: #012d1d; font-family: Manrope, sans-serif;">
-                                {{ t('Mensagem enviada com sucesso!', 'Message sent successfully!') }}
+                                {{ 'Mensagem enviada com sucesso!' }}
                             </p>
                         </div>
 
@@ -584,7 +539,7 @@ function prevServices() {
                                         :style="fieldStyle(contactForm.errors.unit_email)"
                                         style="font-family: Manrope, sans-serif; font-size: 0.9rem; color: #1c1c19;">
                                         <option v-for="(unit, i) in units" :key="i" :value="unit.email || ''">
-                                            {{ unit.label || (unit.tipo === 'matriz' ? t('Matriz (Sede)', 'Headquarters') : t('Filial', 'Branch')) }}
+                                            {{ unit.label || (unit.tipo === 'matriz' ? 'Matriz (Sede)' : 'Filial') }}
                                             {{ unit.address ? ' — ' + unit.address.split(',')[0] : '' }}
                                         </option>
                                     </select>
@@ -600,7 +555,7 @@ function prevServices() {
                                         v-model="contactForm.name"
                                         class="w-full px-4 py-3.5 rounded-xl outline-none transition-all focus:ring-2"
                                         :style="fieldStyle(contactForm.errors.name)"
-                                        :placeholder="t('Seu Nome', 'Your Name')"
+                                        :placeholder="'Seu Nome'"
                                         type="text"
                                     />
                                     <p v-if="contactForm.errors.name" class="mt-1 text-xs font-semibold" style="color:#ba1a1a; font-family: Manrope, sans-serif;">{{ contactForm.errors.name }}</p>
@@ -610,7 +565,7 @@ function prevServices() {
                                         v-model="contactForm.email"
                                         class="w-full px-4 py-3.5 rounded-xl outline-none transition-all focus:ring-2"
                                         :style="fieldStyle(contactForm.errors.email)"
-                                        :placeholder="t('E-mail', 'Email')"
+                                        :placeholder="'E-mail'"
                                         type="email"
                                     />
                                     <p v-if="contactForm.errors.email" class="mt-1 text-xs font-semibold" style="color:#ba1a1a; font-family: Manrope, sans-serif;">{{ contactForm.errors.email }}</p>
@@ -623,7 +578,7 @@ function prevServices() {
                                     v-model="contactForm.message"
                                     class="w-full px-4 py-3.5 rounded-xl outline-none resize-none transition-all focus:ring-2"
                                     :style="fieldStyle(contactForm.errors.message)"
-                                    :placeholder="t('Fale sobre seu projeto...', 'Tell us about your project...')"
+                                    :placeholder="'Fale sobre seu projeto...'"
                                     rows="4"
                                 ></textarea>
                                 <p v-if="contactForm.errors.message" class="mt-1 text-xs font-semibold" style="color:#ba1a1a; font-family: Manrope, sans-serif;">{{ contactForm.errors.message }}</p>
@@ -636,7 +591,7 @@ function prevServices() {
                                 style="background-color: #012d1d;"
                             >
                                 <span v-if="contactForm.processing" class="material-symbols-outlined text-base animate-spin align-middle mr-1">autorenew</span>
-                                {{ contactForm.processing ? t('Enviando...', 'Sending...') : t('Enviar Mensagem', 'Send Message') }}
+                                {{ contactForm.processing ? 'Enviando...' : 'Enviar Mensagem' }}
                             </button>
                         </form>
                     </div>
@@ -645,4 +600,119 @@ function prevServices() {
 
         </div>
     </section>
+
+    <!-- ──────────────────────────── PRODUCTS MARQUEE ──────────────────────────── -->
+    <section v-if="marqueeProducts.length" class="py-16 overflow-hidden relative" style="background-color: #012d1d;">
+        <!-- Fade nas bordas -->
+        <div class="absolute inset-y-0 left-0 w-16 md:w-32 z-10 pointer-events-none"
+             style="background: linear-gradient(to right, #012d1d, transparent);"></div>
+        <div class="absolute inset-y-0 right-0 w-16 md:w-32 z-10 pointer-events-none"
+             style="background: linear-gradient(to left, #012d1d, transparent);"></div>
+
+        <!-- Faixa de nomes — rola para a esquerda -->
+        <div class="marquee-track marquee-left mb-8 whitespace-nowrap">
+            <div class="marquee-group">
+                <span v-for="(item, i) in marqueeProducts" :key="`name-a-${i}`"
+                      class="inline-flex items-center font-headline font-black uppercase tracking-tight"
+                      style="font-size: clamp(1.5rem, 3vw, 2.75rem); color: rgba(245,230,216,0.9);">
+                    {{ item.name }}
+                    <span class="mx-6 md:mx-10 text-amber-400/50" style="font-size: 0.6em;">●</span>
+                </span>
+            </div>
+            <div class="marquee-group" aria-hidden="true">
+                <span v-for="(item, i) in marqueeProducts" :key="`name-b-${i}`"
+                      class="inline-flex items-center font-headline font-black uppercase tracking-tight"
+                      style="font-size: clamp(1.5rem, 3vw, 2.75rem); color: rgba(245,230,216,0.9);">
+                    {{ item.name }}
+                    <span class="mx-6 md:mx-10 text-amber-400/50" style="font-size: 0.6em;">●</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Faixa de fotos — rola para a direita -->
+        <div class="marquee-track marquee-right whitespace-nowrap">
+            <div class="marquee-group">
+                <Link v-for="(item, i) in marqueeProducts" :key="`photo-a-${i}`"
+                      :href="marqueeItemUrl(item)"
+                      class="inline-block mx-2.5 rounded-2xl overflow-hidden shrink-0 group relative shadow-xl"
+                      style="width: 280px; height: 200px;">
+                    <img :src="item.cover_url" :alt="item.name"
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+                    <div class="absolute inset-0 transition-colors duration-300"
+                         style="background-color: rgba(1,45,29,0.15);"
+                         onmouseover="this.style.backgroundColor='rgba(1,45,29,0)'"
+                         onmouseout="this.style.backgroundColor='rgba(1,45,29,0.15)'"></div>
+                    <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <span class="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest"
+                              style="background-color: rgba(0,0,0,0.55); color: #fff; backdrop-filter: blur(4px);">
+                            {{ item.name }}
+                        </span>
+                        <span class="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                              style="background-color: #fbbf24;">
+                            <span class="material-symbols-outlined text-sm" style="color:#012d1d;">arrow_outward</span>
+                        </span>
+                    </div>
+                </Link>
+            </div>
+            <div class="marquee-group" aria-hidden="true">
+                <Link v-for="(item, i) in marqueeProducts" :key="`photo-b-${i}`"
+                      :href="marqueeItemUrl(item)"
+                      class="inline-block mx-2.5 rounded-2xl overflow-hidden shrink-0 group relative shadow-xl"
+                      style="width: 280px; height: 200px;">
+                    <img :src="item.cover_url" :alt="item.name"
+                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+                    <div class="absolute inset-0" style="background-color: rgba(1,45,29,0.15);"></div>
+                    <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <span class="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest"
+                              style="background-color: rgba(0,0,0,0.55); color: #fff; backdrop-filter: blur(4px);">
+                            {{ item.name }}
+                        </span>
+                        <span class="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                              style="background-color: #fbbf24;">
+                            <span class="material-symbols-outlined text-sm" style="color:#012d1d;">arrow_outward</span>
+                        </span>
+                    </div>
+                </Link>
+            </div>
+        </div>
+    </section>
 </template>
+
+<style scoped>
+.marquee-track {
+    display: flex;
+    width: max-content;
+}
+.marquee-group {
+    display: flex;
+    flex-shrink: 0;
+    animation-duration: 38s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+.marquee-left .marquee-group {
+    animation-name: marquee-scroll-left;
+}
+.marquee-right .marquee-group {
+    animation-name: marquee-scroll-right;
+    animation-duration: 32s;
+}
+.marquee-track:hover .marquee-group {
+    animation-play-state: paused;
+}
+
+@keyframes marquee-scroll-left {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-100%); }
+}
+@keyframes marquee-scroll-right {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .marquee-group {
+        animation: none;
+    }
+}
+</style>

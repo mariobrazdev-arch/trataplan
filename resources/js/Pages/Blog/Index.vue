@@ -1,7 +1,6 @@
 <script setup>
 import SeoHead from '@/Components/Shared/SeoHead.vue';
 import { Link } from '@inertiajs/vue3';
-import { useLocale } from '@/composables/useLocale';
 import { computed, ref } from 'vue';
 
 const props = defineProps({
@@ -9,8 +8,6 @@ const props = defineProps({
     postCategories: Array,
     seo: Object,
 });
-
-const { locale, t } = useLocale();
 
 // ── Filtro de categoria (client-side dentro da página atual) ────
 const activeCategory = ref(null);
@@ -43,8 +40,7 @@ const pagination = computed(() => props.posts);
 const fallback = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=70';
 
 function postUrl(post) {
-    const prefix = locale.value === 'en' ? '/en' : '';
-    return `${prefix}/blog/${post.slug}`;
+    return `/blog/${post.slug}`;
 }
 </script>
 
@@ -59,21 +55,18 @@ function postUrl(post) {
                 <div>
                     <span class="block font-bold tracking-[0.25em] text-xs uppercase mb-3"
                         style="font-family: Manrope, sans-serif; color: #6a5e33;">
-                        {{ t('DIÁRIO DE CAMPO', 'FIELD JOURNAL') }}
+                        {{ 'DIÁRIO DE CAMPO' }}
                     </span>
                     <h1 class="text-4xl md:text-5xl font-black leading-tight"
                         style="font-family: Manrope, sans-serif; color: #012d1d;">
-                        {{ t('Novidades, Dicas', 'News, Tips') }}<br>
-                        <span style="color: #6a5e33;">{{ t('e Bastidores.', 'and Behind the Scenes.') }}</span>
+                        {{ 'Novidades, Dicas' }}<br>
+                        <span style="color: #6a5e33;">{{ 'e Bastidores.' }}</span>
                     </h1>
                 </div>
                 <div class="flex items-end">
                     <p class="text-lg leading-relaxed font-body italic"
                         style="font-family: Newsreader, serif; color: #5d4c40;">
-                        {{ t(
-                            'Explore projetos, técnicas sustentáveis e novidades sobre madeira tratada e paisagismo.',
-                            'Explore projects, sustainable techniques and updates on treated wood and landscaping.'
-                        ) }}
+                        {{ 'Explore projetos, técnicas sustentáveis e novidades sobre madeira tratada e paisagismo.' }}
                     </p>
                 </div>
             </div>
@@ -87,7 +80,7 @@ function postUrl(post) {
                     :style="activeCategory === null
                         ? 'background-color:#012d1d; color:#fff;'
                         : 'background-color:#ebe8e3; color:#414844;'">
-                    {{ t('Todas', 'All') }}
+                    {{ 'Todas' }}
                 </button>
                 <button
                     v-for="cat in postCategories"
@@ -110,7 +103,7 @@ function postUrl(post) {
                     <input
                         v-model="search"
                         type="text"
-                        :placeholder="t('Buscar artigo...', 'Search post...')"
+                        :placeholder="'Buscar artigo...'"
                         class="bg-transparent outline-none text-sm flex-1"
                         style="font-family: Manrope, sans-serif; color: #414844;" />
                 </div>
@@ -120,7 +113,7 @@ function postUrl(post) {
             <div v-if="!visiblePosts.length" class="py-24 text-center">
                 <span class="material-symbols-outlined text-5xl block mb-3" style="color:#c1c8c2;">article</span>
                 <p class="font-body italic text-lg" style="color:#9e9e9e;">
-                    {{ t('Nenhuma postagem encontrada.', 'No posts found.') }}
+                    {{ 'Nenhuma postagem encontrada.' }}
                 </p>
             </div>
 
@@ -159,7 +152,7 @@ function postUrl(post) {
                             </p>
                             <span class="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wider"
                                 style="font-family:Manrope,sans-serif; color:#c1ecd4;">
-                                {{ t('Ler artigo completo', 'Read full article') }}
+                                {{ 'Ler artigo completo' }}
                                 <span class="material-symbols-outlined text-base">arrow_forward</span>
                             </span>
                         </div>
@@ -194,7 +187,7 @@ function postUrl(post) {
                             </p>
                             <span class="mt-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest"
                                 style="font-family:Manrope,sans-serif; color:#012d1d;">
-                                {{ t('Explorar notícia', 'Read more') }}
+                                {{ 'Explorar notícia' }}
                                 <span class="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
                             </span>
                         </div>
@@ -247,9 +240,9 @@ function postUrl(post) {
             <div v-if="pagination && pagination.last_page > 1"
                 class="mt-14 flex items-center justify-between">
                 <p class="text-sm" style="font-family:Manrope,sans-serif; color:#9e9e9e;">
-                    {{ t('Página', 'Page') }}
+                    {{ 'Página' }}
                     <strong style="color:#012d1d;">{{ String(pagination.current_page).padStart(2,'0') }}</strong>
-                    {{ t('de', 'of') }}
+                    {{ 'de' }}
                     <strong style="color:#012d1d;">{{ String(pagination.last_page).padStart(2,'0') }}</strong>
                 </p>
 

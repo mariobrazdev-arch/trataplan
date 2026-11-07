@@ -13,7 +13,6 @@ const form = useForm({
     name: props.partner?.name || '',
     website: props.partner?.website || '',
     description_pt: props.partner?.description_pt || '',
-    description_en: props.partner?.description_en || '',
     order: props.partner?.order ?? 0,
     is_active: props.partner?.is_active ?? true,
     logo: null,
@@ -51,17 +50,10 @@ function submit() {
                     <input v-model="form.website" type="url" class="w-full px-4 py-3 rounded-lg outline-none"
                         style="background-color: #f0ede8; border: none;" placeholder="https://" />
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-widest mb-2" style="color: #77574d;">Descrição PT</label>
-                        <textarea v-model="form.description_pt" rows="3" class="w-full px-4 py-3 rounded-lg outline-none resize-none"
-                            style="background-color: #f0ede8; border: none; font-family: Newsreader, serif;"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-widest mb-2" style="color: #77574d;">Description EN</label>
-                        <textarea v-model="form.description_en" rows="3" class="w-full px-4 py-3 rounded-lg outline-none resize-none"
-                            style="background-color: #f0ede8; border: none; font-family: Newsreader, serif;"></textarea>
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-widest mb-2" style="color: #77574d;">Descrição</label>
+                    <textarea v-model="form.description_pt" rows="3" class="w-full px-4 py-3 rounded-lg outline-none resize-none"
+                        style="background-color: #f0ede8; border: none; font-family: Newsreader, serif;"></textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
